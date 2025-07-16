@@ -57,17 +57,17 @@ void move_linear(motorInfo* motor){
    */
   switch(motor->current_state){
   case 0:
-    // move down 
-    *(motor->linear_up_port) &= ~(1 << motor->linear_up_pin);
-    *(motor->linear_down_port) |= (1 << motor->linear_down_pin);
+    // move up 
+    *(motor->linear_down_port) &= ~(1 << motor->linear_down_pin);
+    *(motor->linear_up_port) |= (1 << motor->linear_up_pin);
     
     motor->motor_move_start = millis();
 
     break;
   case 1:
-    // move up 
-    *(motor->linear_down_port) &= ~(1 << motor->linear_down_pin);
-    *(motor->linear_up_port) |= (1 << motor->linear_up_pin);
+    // move down 
+    *(motor->linear_up_port) &= ~(1 << motor->linear_up_pin);
+    *(motor->linear_down_port) |= (1 << motor->linear_down_pin);
     
     motor->motor_move_start = millis();
     break;
@@ -94,21 +94,17 @@ void setup() {
   DDRA |= (1 << PA3);
   DDRA |= (1 << PA4);
   DDRA |= (1 << PA5);
-  
-  PORTA &= ~(1 << PA0);
-  PORTA &= ~(1 << PA1);
-  PORTA &= ~(1 << PA2);
-  PORTA &= ~(1 << PA3);
-  PORTA &= ~(1 << PA4);
-  PORTA &= ~(1 << PA5);
+
 
   PORTA |= (1 << PA0);
   PORTA |= (1 << PA2);
   PORTA |= (1 << PA4);
   delay(4000);
+
   PORTA &= ~(1 << PA0);
   PORTA &= ~(1 << PA2);
   PORTA &= ~(1 << PA4);
+
 
   PORTA |= (1 << PA1);
   PORTA |= (1 << PA3);
@@ -117,6 +113,7 @@ void setup() {
   PORTA &= ~(1 << PA1);
   PORTA &= ~(1 << PA3);
   PORTA &= ~(1 << PA5);
+
 
 }
 
@@ -185,8 +182,8 @@ void loop() {
           if ((millis() - motor->motor_move_start) > LINEAR_ACTUATOR_TIME){
             switch(motor->current_state){
               case 0:
-                // move down 
-                *(motor->linear_down_port) &= ~(1 << motor->linear_down_pin);
+                // move up 
+                *(motor->linear_up_port) &= ~(1 << motor->linear_up_pin);
                 motor->previous_state = 0;
                 
                 motor->in_motion = 0;
@@ -195,8 +192,8 @@ void loop() {
 
                 break;
               case 1:
-                // move up 
-                *(motor->linear_up_port) &= ~(1 << motor->linear_up_pin);
+                // move down
+                *(motor->linear_down_port) &= ~(1 << motor->linear_down_pin);
 
                 motor->previous_state = motor->current_state;
                 motor->previous_state = 1;

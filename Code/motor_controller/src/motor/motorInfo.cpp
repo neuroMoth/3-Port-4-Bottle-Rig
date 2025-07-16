@@ -8,8 +8,8 @@ motorInfo::motorInfo(uint8_t dig_pin_num, volatile uint8_t *port_number, volatil
 
     motor_type = type;
 
-    current_state = 1;
-    previous_state = 1;
+    current_state = 0;
+    previous_state = 0;
     motor_running = 0;
 
     init_movement_recieved = 0;
