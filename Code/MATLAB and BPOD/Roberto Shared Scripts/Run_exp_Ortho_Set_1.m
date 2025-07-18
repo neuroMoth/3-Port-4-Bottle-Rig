@@ -8,13 +8,14 @@ global BpodSystem
 %% --- Session Setup
 % Assert Analog Input module is present + USB-paired (via USB button on console GUI)
 BpodSystem.assertModule('AnalogIn', 1); % 
-BpodSystem.assertModule('WavePlayer', 1); % 
+
+%BpodSystem.assertModule('WavePlayer', 1); % 
 
 %% Setup analog input module - This should read and record licking, breathing, and many other inputs sent by the analog outputs
 A = BpodAnalogIn(BpodSystem.ModuleUSB.AnalogIn1); % Create an instance of the Analog Input module
-A.nActiveChannels = 4; % Record from up to 2 channels
-A.Stream2USB(1:4) = 1; % Configure only channels 1 and 2 for USB streaming
-A.InputRange(1) = {'-5V:5V'}; A.InputRange(2) = {'-5V:5V'}; A.InputRange(3) = {'-5V:5V'}; A.InputRange(4) = {'-10V:10V'};
+A.nActiveChannels = 3; % Actively record from up to 3 channels
+A.Stream2USB(1:3) = 1; % Configure only  channels 1 and 2 for USB streaming
+A.InputRange(1) = {'-5V:5V'}; A.InputRange(2) = {'-5V:5V'}; A.InputRange(3) = {'-5V:5V'};
 %A.SMeventsEnabled(1) = 1; % Return threshold crossing events from Ch1
 %A.Thresholds(1) = 2.5; % Set voltage threshold of Ch1 to 2.5V
 %A.ResetVoltages(1) = 1; % Voltage must return below 1V before another threshold crossing event can be triggered
@@ -30,7 +31,7 @@ S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager 
     if isempty(fieldnames(S))  % If settings file was an empty struct, populate struct with default settings
         
         subj = BpodSystem.GUIData.SubjectName;
-        dir = ['C:\Users\VincisLab Photometry\Documents\MATLAB\Bpod Local\Data\' subj '\Set_param_Ortho_Set_1\Session Settings\DefaultSettings.mat'];
+        dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local' subj '\Set_param_Ortho_Set_1\Session Settings\DefaultSettings.mat'];
         temp = load(dir);
         S = temp.ProtocolSettings; clear temp;
         
@@ -49,19 +50,19 @@ S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager 
 %% --- Initialize the control for generation of sounds and 5 Volts analog events
 % Decimal:8 -> binary:1000 -> analog output 4 (WavePlayer1)
 % Decimal:4 -> binary:0100 -> analog output 3 (WavePlayer1)
-W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1); % Create an instance of the WavePlayer 4 channels
-J = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer2); % Create an instance of the WavePlayer 8 channels
+%W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1); % Create an instance of the WavePlayer 4 channels
+%J = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer2); % Create an instance of the WavePlayer 8 channels
 
-W.SamplingRate = 10000; %10KHz sampilng rate
-J.SamplingRate = 10000; %10KHz sampilng rate
+%W.SamplingRate = 10000; %10KHz sampilng rate
+%J.SamplingRate = 10000; %10KHz sampilng rate
 
-Sound  = GenerateSineWave(30000, 55000, 1);
-Sound  = Sound(1:500*1); % 500ms
+%Sound  = GenerateSineWave(30000, 55000, 1);
+%Sound  = Sound(1:500*1); % 500ms
 
-Five_volts = 5 * ones(1, W.SamplingRate/1000); % 1ms 5Volt signal
-W.loadWaveform(1, Sound);         % Loads a sound as waveform 1
-W.loadWaveform(2, -1*Five_volts); % Loads a single -5V sample as waveform 2
-W.loadWaveform(3, Five_volts);    % Loads a single 5V sample as waveform 3
+%Five_volts = 5 * ones(1, W.SamplingRate/1000); % 1ms 5Volt signal
+%W.loadWaveform(1, Sound);         % Loads a sound as waveform 1
+%W.loadWaveform(2, -1*Five_volts); % Loads a single -5V sample as waveform 2
+%W.loadWaveform(3, Five_volts);    % Loads a single 5V sample as waveform 3
 
 %%
 % add the settings to the Bpodsystem object
