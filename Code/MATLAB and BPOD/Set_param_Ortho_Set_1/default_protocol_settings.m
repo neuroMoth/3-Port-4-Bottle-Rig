@@ -2,10 +2,23 @@ function protocol_settings = default_protocol_settings(protocol_settings)
     % Function that intakes a BpodSystem ProtocolSettings object and returns 
     % the object with default settings for the protocol.
 
-    taste_valves = {'1','2','3','4','5', '6', '7', '8'};
-    protocol_settings = create_popup_menu(protocol_settings, "select_taste_valve", 1, taste_valves);
+    valves = ValveDetails.empty();
 
+    for i = 1:Set_param_constants.NUM_VALVES
+                                           
+        valve_open_time_def = GetValveTimes(5,i); 
+        new_valve = ValveDetails(i, 5, valve_open_time_def);
+
+        valves(end +1) = new_valve;
+    end
+
+    valve_labels = {'1','2','3','4','5', '6', '7', '8'};
     liquid_amount_options = {'1','1.5','2','2.5','3','3.5','4','4.5','5','5.5','6','6.5','7','7.5','8','8.5'};
+
+    default_liquid_index = find(cellfun(@(x) strcmp(x,'5'), liquid_amount_options));
+
+    protocol_settings = create_popup_menu(protocol_settings, "select_taste_valve", 1, valve_labels);
+
     protocol_settings = create_popup_menu(protocol_settings, "select_amount_liquid_ul", 9, liquid_amount_options);
 
     calibration_or_manual_values = {'Use Calibration Values', 'Manually Set Opening Times'};
@@ -21,10 +34,10 @@ function protocol_settings = default_protocol_settings(protocol_settings)
     if protocol_settings.GUI.calibration_or_clean == 1
         % if S.GUI.calibration_or_clean popup has the first option selected (use calibration values) then go find those 
         % for each valve 
-        protocol_settings = set_valve_open_values(protocol_settings, 'calibrated');   
+        protocol_settings = set_valve_open_values(protocol_settings, valves, 'calibrated');   
     else
         % otherwise use a default of 30 and allow user to change to whatever value they want
-        protocol_settings = set_valve_open_values(protocol_settings, 'default');   
+        protocol_settings = set_valve_open_values(protocol_settings, valves, 'default');   
     end
 
     % clear residual panel information, then create the panel again by giving variable names of gui entities to 
@@ -61,7 +74,7 @@ function protocol_settings = default_protocol_settings(protocol_settings)
     stimulus_options = {'empty', 'stimulus_1', 'stimulus_2', 'stimulus_3', 'stimulus_4', 'stimulus_5',...
         'stimulus_6', 'stimulus_7', 'stimulus_8', 'stimulus_9', 'stimulus_10', 'stimulus_11', 'stimulus_12',...
         'stimulus_13', 'stimulus_14', 'stimulus_15', 'stimulus_16', 'stimulus_17', 'stimulus_18', 'stimulus_19',...
-        'stimulus_20', 'stimulus_24'};
+        'stimulus_20', 'stimulus_21'};
 
 
 protocol_settings.GUIPanels.Current_valve_assignments = {};
@@ -82,11 +95,11 @@ protocol_settings = create_popup_menu(protocol_settings, 'odor_set', 3, odor_set
 
 
 %% Setup for text panel displaying odor selections 
-protocol_settings.GUIPanels.Current_Odor_ID = {};
+protocol_settings.GUIPanels.stimuli_ID = {};
 for i = 1:Set_param_constants.NUM_VALVES
     odor_id = i;
 
-    variable_name = sprintf('odor_ID_%d', odor_id);
+    variable_name = sprintf('stimuli_ID_%d', odor_id);
     valve_line_value = sprintf("valve_line_%d", odor_id);
 
     stimulus_name = protocol_settings.GUI.(valve_line_value)

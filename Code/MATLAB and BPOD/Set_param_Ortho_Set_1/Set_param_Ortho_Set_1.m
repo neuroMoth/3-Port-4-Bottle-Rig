@@ -58,7 +58,7 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
     BpodSystem.ProtocolSettings = S;
 end
 
-% Initialize parameter GUI plugin
+% Initialize parameter GUI plugin with gui returned from default_protocol_settings
 BpodParameterGUI('init', S); 
 
 
@@ -116,8 +116,6 @@ for i = 1:Set_param_constants.NUM_SECONDS
             shutdown_protocol(A);
         end
         return
-
     end
-
 end
 %% END STATE MACHINE
