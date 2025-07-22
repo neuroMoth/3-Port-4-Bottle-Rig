@@ -6,33 +6,18 @@
 
 // door stepper motor constants
 const int STEPPER_LEFT_POSITION = 0;
-const int STEPPER_RIGHT_POSITION = 6000;
+const int STEPPER_RIGHT_POSITION = 2400;
 const int MAX_SPEED = 5500; 
 const int ACCELERATION = 5500;
 
 // time linear actuator is allowed to move in ms
-const unsigned long LINEAR_ACTUATOR_TIME = 2000;
+const unsigned long LINEAR_ACTUATOR_TIME = 4000;
 
 const uint8_t DIR_PIN = 53;
 const uint8_t STEP_PIN = 51;
 
 AccelStepper stepper = AccelStepper(1, STEP_PIN, DIR_PIN);
 
-uint8_t convert_bool_to_binary(bool bit_1, bool bit_2, bool bit_3, bool bit_4){
-  /*
-   * funtion to convert four booleans to four bit binary number to quickly check which numbers have changed. 
-   * bit_1 is the least significant (rightmost) bit, while bit 4 is the most significant (leftmost) bit. 
-   */
-
-    uint8_t value = 0;
-
-    value |= (bit_1? 1 : 0) << 0; 
-    value |= (bit_2? 1 : 0) << 1; 
-    value |= (bit_3? 1 : 0) << 2; 
-    value |= (bit_4? 1 : 0) << 3; 
-
-    return value;
-}
 
 void move_stepper(motorInfo* motor){
   /*
@@ -99,7 +84,7 @@ void setup() {
   PORTA |= (1 << PA0);
   PORTA |= (1 << PA2);
   PORTA |= (1 << PA4);
-  delay(4000);
+  delay(10000);
 
   PORTA &= ~(1 << PA0);
   PORTA &= ~(1 << PA2);
@@ -140,18 +125,12 @@ void loop() {
   static int num_motors = sizeof(motors) / sizeof(motors[0]);
 
   static uint8_t current_val = 0;
-  static uint8_t last_val = 0;
   
   if(millis() - last_poll > 1){
-    last_val = convert_bool_to_binary(center_port.current_state, door_3.current_state, door_2.current_state, door_1.current_state);
-
     bool state_1 = door_1.check_state();  
     door_2.check_state();  
     door_3.check_state();  
     center_port.check_state();  
-
-
-    current_val = convert_bool_to_binary(center_port.current_state, door_3.current_state, door_2.current_state, door_1.current_state);
 
     last_poll = millis();
   }
@@ -162,20 +141,32 @@ void loop() {
     motorInfo* motor = motors[i]; 
 
     if(motor->move_motor){
-        switch(motor->motor_type){
-          case MotorType::LINEAR:
-            move_linear(motor);
+      switch(motor->motor_type){
+        case MotorType::LINEAR:
+          move_linear(motor);
+          break;
+        case MotorType::STEPPER:
+          move_stepper(motor);
+          switch(motor->current_state){
+              case 0:
+                // move up 
+                motor->previous_state = 0;
 
-            motor->move_motor = 0;
-            motor->in_motion = 1;
-            break;
-          case MotorType::STEPPER:
-            move_stepper(motor);
-            
-            motor->move_motor = 0;
-            motor->in_motion = 1;
-            break;
-        }
+                motor->in_motion = 0;
+                break;
+              case 1:
+                // move down
+
+                motor->previous_state = motor->current_state;
+                motor->previous_state = 1;
+
+                motor->in_motion = 0;
+                break;
+            }
+          break;
+      }
+      motor->move_motor = 0;
+      motor->in_motion = 1;
     }else if(motor->in_motion){
       switch(motor->motor_type){
         case MotorType::LINEAR:
@@ -185,11 +176,8 @@ void loop() {
                 // move up 
                 *(motor->linear_up_port) &= ~(1 << motor->linear_up_pin);
                 motor->previous_state = 0;
-                
+
                 motor->in_motion = 0;
-
-
-
                 break;
               case 1:
                 // move down
@@ -197,7 +185,7 @@ void loop() {
 
                 motor->previous_state = motor->current_state;
                 motor->previous_state = 1;
-                
+
                 motor->in_motion = 0;
                 break;
             }
