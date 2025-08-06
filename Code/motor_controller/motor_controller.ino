@@ -11,7 +11,7 @@ const int MAX_SPEED = 5500;
 const int ACCELERATION = 5500;
 
 // time linear actuator is allowed to move in ms
-const unsigned long LINEAR_ACTUATOR_TIME = 4000;
+const unsigned long LINEAR_ACTUATOR_TIME = 1000;
 
 const uint8_t DIR_PIN = 53;
 const uint8_t STEP_PIN = 51;
@@ -84,7 +84,7 @@ void setup() {
   PORTA |= (1 << PA0);
   PORTA |= (1 << PA2);
   PORTA |= (1 << PA4);
-  delay(10000);
+  delay(2000);
 
   PORTA &= ~(1 << PA0);
   PORTA &= ~(1 << PA2);
@@ -94,7 +94,7 @@ void setup() {
   PORTA |= (1 << PA1);
   PORTA |= (1 << PA3);
   PORTA |= (1 << PA5);
-  delay(500);
+  delay(125);
   PORTA &= ~(1 << PA1);
   PORTA &= ~(1 << PA3);
   PORTA &= ~(1 << PA5);
