@@ -1,20 +1,4 @@
 BpodSystem.FlexIOConfig.channelTypes = [1 1 1 1];
-A = BpodAnalogIn('COM6');
-A.nActiveChannels = 4;
-% enable event reporting on AnalogInput1. This sends lick 'events' (5v
-% threshold reached) to the state machine to be processed/counted.
-A.SMeventsEnabled(1:4) = 1;
-% This sets threshold voltages that we want to exceed to generate events.
-% Here we use 5 volts.
-A.Thresholds(1:4) = 5;
-% ResetVoltages sets the lower voltage bound that must be crossed before a
-% new event can trigger. Here we must go below 1 volt.
-A.ResetVoltages(1:4) = 1;
-% Tell the AnalogInput1 module to start reporting events to the
-% state machine
-A.startReportingEvents();
-% start the oscilliscope.
-A.scope();
 
  S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
  if isempty(fieldnames(S))  % If settings file was an empty struct, populate struct with default settings
@@ -26,7 +10,6 @@ A.scope();
     
      % init an empty cell array to hold names of gui fields to remove 
     fields = {};
-    % remove ability to rename valve stimuli
     for i = 1:8
         fieldname = sprintf('valve_line_%d', i);
 
@@ -36,6 +19,7 @@ A.scope();
 
         fields{end+1} = fieldname;
     end
+    fields
 
      S.GUIMeta = rmfield(S.GUIMeta, fields); % Using a cell array
 
@@ -48,14 +32,10 @@ A.scope();
 
  BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
-
  for current_trial = 1:600
      trial_valve = S.stimuli_sequence(current_trial);
 
-     PORT_1_VALVE = 1;
-     PORT_8_VALVE = 8;
-
-     LoadSerialMessages('ValveModule1', {['O' trial_valve], ['C' trial_valve]}, ['O', PORT_1_VALVE], ['C', PORT_1_VALVE], ['O', PORT_8_VALVE], ['C', PORT_8_VALVE]);  % load current trial valve for center port into serial messages.
+     LoadSerialMessages('ValveModule1', {['O' trial_valve], ['C' trial_valve]});  % Just play with Valve 1 for the moment
 
      valve_time_variable = sprintf('open_time_%d', trial_valve); 
 
@@ -64,9 +44,6 @@ A.scope();
      S = BpodParameterGUI('sync', S);  
 
      sma = NewStateMachine();
-     
-     sma = SetGlobalCounter(sma, 1, 'AnalogIn1_1', 3); % Arguments: (sma, CounterNumber, TargetEvent, Threshold)?
-
 
      sma = AddState(sma, 'Name', 'start', ...
          'Timer', 1,...
@@ -76,11 +53,11 @@ A.scope();
      sma = AddState(sma, 'Name', 'moveCenterPortRight', ...
          'Timer', 3,...
          'StateChangeConditions', {'Tup', 'centerPortDown'},...
-         'OutputActions',{'Flex1DO', 0, 'Flex2DO', 0,'Flex3DO', 0, 'Flex4DO', 1, 'GlobalCounterReset', 1});
+         'OutputActions',{'Flex1DO', 0, 'Flex2DO', 0,'Flex3DO', 0, 'Flex4DO', 1});
 
      sma = AddState(sma, 'Name', 'centerPortDown', ...
          'Timer', 10,...
-         'StateChangeConditions', {'Tup', 'flipValveOn', 'GlobalCounter1_End', 'flipValveOn'},...
+         'StateChangeConditions', {'Tup', 'flipValveOn'},...
          'OutputActions',{'Flex1DO', 0, 'Flex2DO', 1,'Flex3DO', 0, 'Flex4DO', 1});
 
      sma = AddState(sma, 'Name', 'flipValveOn', ...
@@ -106,21 +83,9 @@ A.scope();
 
      SendStateMachine(sma);
      events = RunStateMachine();
-     events
-     
-     HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
-     if BpodSystem.Status.BeingUsed == 0
-        A.endAcq; % Close Oscope GUI
-        A.stopReportingEvents; % Stop sending events to state machine
-        return
-    end
- end
+     end
 
 
 
 
 
-
-
-
-    
