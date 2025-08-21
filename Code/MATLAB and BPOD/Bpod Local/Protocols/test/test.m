@@ -16,52 +16,33 @@ A.startReportingEvents();
 % start the oscilliscope.
 A.scope();
 
+% Decimal:8 -> binary:1000 -> analog output 4 (WavePlayer1)
+% Decimal:4 -> binary:0100 -> analog output 3 (WavePlayer1)
+W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1); % Create an instance of the WavePlayer 4 channels
+%J = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer2); % Create an instance of the WavePlayer 8 channels
+
+W.SamplingRate = 44100; %10KHz sampilng rate
+%J.SamplingRate = 10000; %10KHz sampilng rate
+
+Fs = 44100;    % Sampling rate in Hz (e.g., CD quality)
+T = 5;         % Duration in seconds
+f = 800;       % Frequency of the tone in Hz
+
+% Generate the time vector
+t = 0:1/Fs:T;
+
+% Generate the sinusoidal waveform
+y = sin(2*pi*f*t);
+%Five_volts = 5 * ones(1, W.SamplingRate/1000); % 1ms 5Volt signal
+W.loadWaveform(1, y);         % Loads a sound as waveform 1
+%W.loadWaveform(2, -1*Five_volts); % Loads a single -5V sample as waveform 2
+%W.loadWaveform(3, Five_volts);    % Loads a single 5V sample as waveform 3
+
+%%
  S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
- if isempty(fieldnames(S))  % If settings file was an empty struct, populate struct with default settings
 
-     subj = BpodSystem.GUIData.SubjectName;
-     dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\FakeSubject\Set_param_Ortho_Set_1\Session Settings\DefaultSettings.mat'];
-     temp = load(dir);
-     S = temp.ProtocolSettings; clear temp;
-    
-     % init an empty cell array to hold names of gui fields to remove 
-    fields = {};
-    % remove ability to rename valve stimuli
-    for i = 1:8
-        fieldname = sprintf('valve_line_%d', i);
-
-        fields{end+1} = fieldname;
-        
-        fieldname = sprintf('Valve_%d', i);
-
-        fields{end+1} = fieldname;
-    end
-
-     S.GUIMeta = rmfield(S.GUIMeta, fields); % Using a cell array
-
-    S.GUI = rmfield(S.GUI, fields);
-
-    S.GUIPanels = rmfield(S.GUIPanels, {'Current_valve_assignments','Manual_Taste_Valves'});
-
-    BpodSystem.ProtocolSettings = S;
- end;
-
- BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
-
-
- for current_trial = 1:600
-     trial_valve = S.stimuli_sequence(current_trial);
-
-     PORT_1_VALVE = 1;
-     PORT_8_VALVE = 8;
-
-     LoadSerialMessages('ValveModule1', {['O' trial_valve], ['C' trial_valve]}, ['O', PORT_1_VALVE], ['C', PORT_1_VALVE], ['O', PORT_8_VALVE], ['C', PORT_8_VALVE]);  % load current trial valve for center port into serial messages.
-
-     valve_time_variable = sprintf('open_time_%d', trial_valve); 
-
-     valve_time = BpodSystem.ProtocolSettings.GUI.(valve_time_variable)/1000;
-
-     S = BpodParameterGUI('sync', S);  
+ for current_trial = 1:60
+  
 
      sma = NewStateMachine();
      
@@ -69,40 +50,11 @@ A.scope();
 
 
      sma = AddState(sma, 'Name', 'start', ...
-         'Timer', 1,...
-         'StateChangeConditions', {'Tup', 'moveCenterPortRight'},...
-         'OutputActions',{'Flex1DO', 0, 'Flex2DO', 0,'Flex3DO', 0, 'Flex4DO', 0});
-
-     sma = AddState(sma, 'Name', 'moveCenterPortRight', ...
-         'Timer', 3,...
-         'StateChangeConditions', {'Tup', 'centerPortDown'},...
-         'OutputActions',{'Flex1DO', 0, 'Flex2DO', 0,'Flex3DO', 0, 'Flex4DO', 1, 'GlobalCounterReset', 1});
-
-     sma = AddState(sma, 'Name', 'centerPortDown', ...
-         'Timer', 10,...
-         'StateChangeConditions', {'Tup', 'flipValveOn', 'GlobalCounter1_End', 'flipValveOn'},...
-         'OutputActions',{'Flex1DO', 0, 'Flex2DO', 1,'Flex3DO', 0, 'Flex4DO', 1});
-
-     sma = AddState(sma, 'Name', 'flipValveOn', ...
-         'Timer', 0,...
-         'StateChangeConditions', {'Tup', 'valveDelay'},...
-         'OutputActions',{'Flex1DO', 0, 'Flex2DO', 1,'Flex3DO', 0, 'Flex4DO', 1, 'ValveModule1', 1});
-          
-     sma = AddState(sma, 'Name', 'valveDelay', ...
-         'Timer', valve_time,...
-         'StateChangeConditions', {'Tup', 'flipValveOff'},...
-         'OutputActions',{'Flex1DO', 0, 'Flex2DO', 1,'Flex3DO', 0, 'Flex4DO', 1, 'ValveModule1', 1});
-     
-
-     sma = AddState(sma, 'Name', 'flipValveOff', ...
-         'Timer', 0,...
-         'StateChangeConditions', {'Tup', 'reward'},...
-         'OutputActions',{'Flex1DO', 0, 'Flex2DO', 1,'Flex3DO', 0, 'Flex4DO', 1, 'ValveModule1', 2});
-
-     sma = AddState(sma, 'Name', 'reward', ...
-         'Timer', 20,...
+         'Timer', 30,...
          'StateChangeConditions', {'Tup', 'exit'},...
-         'OutputActions',{'Flex1DO', 1, 'Flex2DO', 0,'Flex3DO', 1, 'Flex4DO', 0});
+         'OutputActions',{'WavePlayer1', ['P' 8 1]});
+
+   
 
      SendStateMachine(sma);
      events = RunStateMachine();
