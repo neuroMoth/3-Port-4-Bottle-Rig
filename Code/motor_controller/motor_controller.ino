@@ -11,7 +11,7 @@ const int MAX_SPEED = 5500;
 const int ACCELERATION = 5500;
 
 // time linear actuator is allowed to move in ms
-const unsigned long LINEAR_ACTUATOR_TIME = 1000;
+const unsigned long LINEAR_ACTUATOR_TIME = 1350;
 
 const uint8_t DIR_PIN = 53;
 const uint8_t STEP_PIN = 51;
