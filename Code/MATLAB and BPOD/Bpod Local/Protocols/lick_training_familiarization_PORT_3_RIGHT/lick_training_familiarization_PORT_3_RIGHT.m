@@ -1,135 +1,154 @@
-A = BpodAnalogIn(BpodSystem.ModuleUSB.AnalogIn1);
-A.nActiveChannels = 4;
-% enable event reporting on AnalogInput1. This sends lick 'events' (5v
-% threshold reached) to the state machine to be processed/counted.
-A.SMeventsEnabled(1:4) = 1;
-% This sets threshold voltages that we want to exceed to generate events.
-% Here we use 5 volts.
-A.Thresholds(1:4) = 5;
-% ResetVoltages sets the lower voltage bound that must be crossed before a
-% new event can trigger. Here we must go below 1 volt.
-A.ResetVoltages(1:4) = 1;
-% Tell the AnalogInput1 module to start reporting events to the
-% state machine
-A.startReportingEvents();
-% start the oscilliscope.
-A.scope();
-A.scope_StartStop;
+%% Code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
+% center port open for 30 minutes. even licks are rewarded with stimulus.
 
-S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
-if isempty(fieldnames(S))  % If settings file was an empty struct, populate struct with default settings
+function lick_training_familiarization_CENTER 
+    global BpodSystem
 
-    subj = BpodSystem.GUIData.SubjectName;
-    dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\FakeSubject\Set_param_Ortho_Set_1\Session Settings\DefaultSettings.mat'];
-    temp = load(dir);
-    S = temp.ProtocolSettings; clear temp;
+    W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1);
+    W.SamplingRate = 44100;
 
-    % init an empty cell array to hold names of gui fields to remove 
-    fields = {};
-    % remove ability to rename valve stimuli
-    for i = 1:8
-        fieldname = sprintf('valve_line_%d', i);
+    Fs = 44100;    % Sampling rate in Hz (e.g., CD quality)
+    T = .5;         % Duration in seconds
+    f = 800;       % Frequency of the tone in Hz
 
-        fields{end+1} = fieldname;
+    % Generate the time vector
+    t = 0:1/Fs:T;
 
-        fieldname = sprintf('Valve_%d', i);
+    % Generate the sinusoidal waveform
+    y = sin(2*pi*f*t);
+    %Five_volts = 5 * ones(1, W.SamplingRate/1000); % 1ms 5Volt signal
+    W.loadWaveform(1, y);         % Loads a sound as waveform 1
 
-        fields{end+1} = fieldname;
+    %expV is used to access experiment constants
+    expV = ExperimentVariables;
+
+    % this variable is created to indicate when the protocol should halt (after 60 minutes). This is set
+    % in the softcode handler function 'BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler_exit'
+    BpodSystem.Status.ExitTrialLoop = false;
+
+    % global variable that will be accessed when SoftCode15 is sent indicating a correct trial selection
+    BpodSystem.Data.CorrectTrials = 0;
+
+    BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
+
+    BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
+
+    BpodSystem.Data.trialsEngaged = zeros(expV.MAXIMUM_TRIALS, 1);
+
+    BpodSystem.Status.trial = 1;
+
+
+    % used to indicate when middle stimulus should switch. this behavior is defined in  SoftCodeHandler.m
+    BpodSystem.Status.switchStimulusFlag = false;
+
+    % used to indicate when middle stimulus should switch. this behavior is defined in  SoftCodeHandler.m
+    BpodSystem.Status.consecutiveRatSkips = 0;
+
+    % configure the analog in. performed in configure_analog_in.m
+    A = configure_analog_in();
+
+    S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
+    if isempty(fieldnames(S)) % If /
+
+        subj = BpodSystem.GUIData.SubjectName;
+        dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\FakeSubject\Set_param_Ortho_Set_1\Session Settings\DefaultSettings.mat'];
+        temp = load(dir);
+        S = temp.ProtocolSettings; clear temp;
+
+        % init an empty cell array to hold names of gui fields to remove
+        fields = {};
+        % remove ability to rename valve stimuli
+        for i = 1:8
+            fieldname = sprintf('valve_line_%d', i);
+
+            fields{end+1} = fieldname;
+
+            fieldname = sprintf('Valve_%d', i);
+
+            fields{end+1} = fieldname;
+        end
+
+        S.GUIMeta = rmfield(S.GUIMeta, fields); % Using a cell array
+
+        S.GUI = rmfield(S.GUI, fields);
+
+        S.GUIPanels = rmfield(S.GUIPanels, {'Current_valve_assignments','Manual_Taste_Valves'});
+
+        BpodSystem.ProtocolSettings = S;
     end
 
-    S.GUIMeta = rmfield(S.GUIMeta, fields); % Using a cell array
+    % port_1 is the instance of the class Port1
+    port_1 = LateralPort(1);
+    % port_3 is the instance of the class Port3
+    port_3 = LateralPort(3);
+    % center_port the instance of the class center_port
+    center_port = CenterPort;
 
-    S.GUI = rmfield(S.GUI, fields);
+    correct_port = PortHandler;
+    incorrect_port = PortHandler;
 
-    S.GUIPanels = rmfield(S.GUIPanels, {'Current_valve_assignments','Manual_Taste_Valves'});
+    BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
-    BpodSystem.ProtocolSettings = S;
-end;
+    % do MAXIMUM_TRIALS as defined in ExperimentVariables file if 60 minutes has not elapsed.
+    for trial= 1:expV.MAXIMUM_TRIALS
+        BpodSystem.Status.trial  = trial;
+        trial
 
-BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
+        S = BpodParameterGUI('sync', S);
 
+        sma = NewStateMachine();
 
-THIRTY_MINUTES = 1800; %seconds.
+        % set global timers for the maximum duration of the experiment and the maximum sample time of 2 seconds.
+        sma = SetGlobalTimer(sma, 'TimerID', expV.experimentTimerID, 'Duration', expV.TOTAL_ALLOWED_TIME);
 
-CENTER_VALVE = 2;
-PORT_1_VALVE = 1;
-PORT_3_VALVE = 8;
+        sma = AddState(sma, 'Name', 'start', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'centerPortDown', 'GlobalTimer1_End', 'cleanup'},...
+            'OutputActions',{'GlobalTimerTrig', 1});
 
-LoadSerialMessages('ValveModule1', {['O' PORT_3_VALVE], ['C' PORT_3_VALVE]});  % load valve for port 1 (LEFT) into serial messages.
+        sma = AddState(sma, 'Name', 'centerPortDown', ...
+            'Timer', 0,...
+            'StateChangeConditions', {port_3.LICK_INPUT, 'noRewardLick', 'GlobalTimer1_End', 'cleanup'},...
+            'OutputActions',{port_3.DOOR, expV.DOWN});
 
-center_valve_time_variable = sprintf('open_time_%d', CENTER_VALVE); 
-valve_time = BpodSystem.ProtocolSettings.GUI.(center_valve_time_variable)/1000;
+        sma = AddState(sma, 'Name', 'noRewardLick', ...
+            'Timer', 0,...
+            'StateChangeConditions', {port_3.LICK_INPUT, 'RewardLick', 'GlobalTimer1_End', 'cleanup'},...
+            'OutputActions',{port_3.DOOR, expV.DOWN});
 
-S = BpodParameterGUI('sync', S);  
+        sma = AddState(sma, 'Name', 'RewardLick', ...
+            'Timer', port_3.VALVE_TIME,...
+            'StateChangeConditions', {'Tup', 'flipValveOff', 'GlobalTimer1_End', 'cleanup'},...
+            'OutputActions',{port_3.DOOR, expV.DOWN, 'ValveModule1', ['O', port_3.VALVE], 'BNC1', 1});
 
-sma = NewStateMachine();
+        sma = AddState(sma, 'Name', 'flipValveOff', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'centerPortDown', 'GlobalTimer1_End', 'cleanup'},...
+            'OutputActions',{port_3.DOOR, expV.DOWN, 'ValveModule1', ['C', port_3.VALVE], 'BNC1', 0});
 
-sma = SetGlobalTimer(sma, 'TimerID', 1, 'Duration', THIRTY_MINUTES);
+        sma = AddState(sma, 'Name', 'cleanup', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'exit'},...
+            'OutputActions',{port_3.DOOR, expV.UP, 'ValveModule1', 2});
 
+        % function will check if softcode '3' has been sent by the state machine in cleanup state. if it has, it is time to exit the
+        % trial loop.
+        BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler';
 
-sma = AddState(sma, 'Name', 'start', ...
-    'Timer', 0,...
-    'StateChangeConditions', {'Tup', 'centerPortDown', 'GlobalTimer1_End', 'cleanup'},...
-    'OutputActions',{'Flex1DO', 0, 'Flex2DO', 0,'Flex3DO', 0, 'Flex4DO', 0, 'GlobalTimerTrig', 1});
+        SendStateMachine(sma);
+        trial_events = RunStateMachine();
 
-sma = AddState(sma, 'Name', 'centerPortDown', ...
-    'Timer', 0,...
-    'StateChangeConditions', {'AnalogIn1_4', 'noRewardLick', 'GlobalTimer1_End', 'cleanup'},...
-    'OutputActions',{'Flex1DO', 0, 'Flex2DO', 0,'Flex3DO', 1, 'Flex4DO', 0});
+        if ~isempty(fieldnames(trial_events)) % If you didn't stop the session manually mid-trial
+            BpodSystem.Data = AddTrialEvents(BpodSystem.Data, trial_events); % Adds raw events to a human-readable data struct
+            SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
+        end
 
-sma = AddState(sma, 'Name', 'noRewardLick', ...
-    'Timer', 0,...
-    'StateChangeConditions', {'AnalogIn1_4', 'RewardLick', 'GlobalTimer1_End', 'cleanup'},...
-    'OutputActions',{'Flex1DO', 0, 'Flex2DO', 0,'Flex3DO', 1, 'Flex4DO', 0});
+        HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
 
-sma = AddState(sma, 'Name', 'RewardLick', ...
-    'Timer', 0,...
-    'StateChangeConditions', {'Tup', 'valveDelay', 'GlobalTimer1_End', 'cleanup'},...
-    'OutputActions',{'Flex1DO', 0, 'Flex2DO', 0,'Flex3DO', 1, 'Flex4DO', 0, 'ValveModule1', 1, 'BNC1', 1});
-
-sma = AddState(sma, 'Name', 'valveDelay', ...
-    'Timer', valve_time,...
-    'StateChangeConditions', {'Tup', 'flipValveOff', 'GlobalTimer1_End', 'cleanup'},...
-    'OutputActions',{'Flex1DO', 0, 'Flex2DO', 0,'Flex3DO', 1, 'Flex4DO', 0, 'ValveModule1', 1, 'BNC1', 1});
-
-
-sma = AddState(sma, 'Name', 'flipValveOff', ...
-    'Timer', 0,...
-    'StateChangeConditions', {'Tup', 'centerPortDown', 'GlobalTimer1_End', 'cleanup'},...
-    'OutputActions',{'Flex1DO', 0, 'Flex2DO', 0,'Flex3DO', 1, 'Flex4DO', 0, 'ValveModule1', 2, 'BNC1', 0});
-
-sma = AddState(sma, 'Name', 'cleanup', ...
-    'Timer', 0,...
-    'StateChangeConditions', {'Tup', 'exit'},...
-    'OutputActions',{'Flex1DO', 0, 'Flex2DO', 0,'Flex3DO', 0, 'Flex4DO', 0, 'ValveModule1', 2});
-
-
-SendStateMachine(sma);
-events = RunStateMachine();
-    events
-
-        if ~isempty(fieldnames(events)) % If you didn't stop the session manually mid-trial
-                BpodSystem.Data = AddTrialEvents(BpodSystem.Data,events); % Adds raw events to a human-readable data struct
-                    SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
-                end
-
-
-                HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
-                if BpodSystem.Status.BeingUsed == 0
-                    A.scope_StartStop;
-                    A.endAcq; % Close Oscope GUI
-                    A.stopReportingEvents; % Stop sending events to state machine
-                    clear A
-                    RunProtocol('Stop')
-                    return
-                end
-
-
-
-
-
-
-
-
-
+        if (BpodSystem.Status.ExitTrialLoop == 1 || BpodSystem.Status.BeingUsed == 0)
+            stop_experiment(A, W);
+            return
+        end
+    end
+end
 

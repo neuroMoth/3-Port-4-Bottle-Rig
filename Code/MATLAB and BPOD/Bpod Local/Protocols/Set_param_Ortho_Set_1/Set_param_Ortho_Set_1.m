@@ -63,7 +63,8 @@ for i = 1:Set_param_constants.NUM_VALVES
     valves(end +1) = new_valve;
 end
 
-
+% set protocol defaults if not yet set. this generates the gui for the program and 
+% sets up field to enter for protocol. 
 if isempty(fieldnames(S))  % If settings file was an empty struct, populate struct with default settings
     S = default_protocol_settings(S, valves);
 

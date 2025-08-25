@@ -1,82 +1,54 @@
 %% Code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
-% SIDE TRANING DAY ONE | ODOR CENTER | VALVE 2 CENTER | LEFT PORT REWARD
+% SIDE TRANING DAY ONE | ODOR CENTER | VALVE 5 CENTER | LEFT PORT REWARD 
 
 function side_training_day_1_odor_right
     global BpodSystem
 
-    SIXTY_MINUTES = 3600; %seconds.
+    W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1);
+    W.SamplingRate = 44100;
 
-    % these varaibles are used to make door commands more intuitive and easy to understand & read.
-    UP = 0;
-    DOWN = 1;
-    LEFT_SPOUT = 0;
-    RIGHT_SPOUT = 1;
+    Fs = 44100;    % Sampling rate in Hz (e.g., CD quality)
+    T = .5;         % Duration in seconds
+    f = 800;       % Frequency of the tone in Hz
 
-    LICK_WINDOW = 2; % Defines amount of seconds rat has to complete required amount of licks.
+    % Generate the time vector
+    t = 0:1/Fs:T;
 
-    %%%%%% MAJOR DIFFERENCE FROM WATER CENTER FILE. VALVE IS CHANGED FROM 2->5. %%%%%%
-    CENTER_VALVE = 5;
-    PORT_1_VALVE = 1;
-    PORT_3_VALVE = 8;
+    % Generate the sinusoidal waveform
+    y = sin(2*pi*f*t);
+    %Five_volts = 5 * ones(1, W.SamplingRate/1000); % 1ms 5Volt signal
+    W.loadWaveform(1, y);         % Loads a sound as waveform 1
 
-    LATERAL_VALVE = PORT_1_VALVE;
+    %expV is used to access experiment constants
+    expV = ExperimentVariables;
 
-    % remap unhelpful analoginput port number strings to variables that can easily be changed
-    % to make the code more reusable.
-    CENTER_INPUT = 'AnalogIn1_1';
-    CENTER_INPUT_2 = 'AnalogIn1_2'; % input for the second spout in the center port.
-    PORT_1_INPUT = 'AnalogIn1_3';
-    PORT_3_INPUT = 'AnalogIn1_4';
+    % this variable is created to indicate when the protocol should halt (after 60 minutes). This is set
+    % in the softcode handler function 'BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler_exit'
+    BpodSystem.Status.ExitTrialLoop = false;
 
-    PORT_1_DOOR = 'Flex1DO';
-    CENTER_PORT_DOOR = 'Flex2DO';
-    PORT_3_DOOR = 'Flex3DO';
-    CENTER_PORT = 'Flex4DO';
+    % global variable that will be accessed when SoftCode15 is sent indicating a correct trial selection
+    BpodSystem.Data.CorrectTrials = 0;
 
-    % these variables are the numbers of the global counters that are used to track
-    % lick counts. The numbers are stored in variables here to make this script
-    % reusable and give the ability to easily flip the desired port.
-    CENTER_1_COUNT_NUM = 1;
-    CENTER_2_COUNT_NUM = 2;
-    PORT_1_COUNT_NUM = 3;
-    PORT_3_COUNT_NUM = 4;
+    BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
 
-    CENTER_1_COUNT_COMPLETE = 'GlobalCounter1_End';
-    CENTER_2_COUNT_COMPLETE = 'GlobalCounter2_End';
-    PORT_1_COUNT_COMPLETE = 'GlobalCounter3_End';
-    PORT_3_COUNT_COMPLETE = 'GlobalCounter4_End';
+    BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
 
-    % save port_1 variables into lateral variables. This way, we can copy this EXACT script and
-    % change ONLY these variables to PORT_3 to flip the 'correct' side.
-    LATERAL_INPUT = PORT_1_INPUT;
-    LATERAL_DOOR = PORT_1_DOOR;
-    LATERAL_LICK_COUNTER = PORT_1_COUNT_NUM;
-    LATERAL_COUNTER_COMPLETE = PORT_1_COUNT_COMPLETE;
+    BpodSystem.Data.trialsEngaged = zeros(expV.MAXIMUM_TRIALS, 1);
 
-    CENTER_LICK_COUNTER = CENTER_1_COUNT_NUM;
-    CENTER_LICK_COMPLETE = CENTER_1_COUNT_COMPLETE;
+    BpodSystem.Status.trial = 1;
 
 
-    A = BpodAnalogIn(BpodSystem.ModuleUSB.AnalogIn1);
-    A.nActiveChannels = 4;
-    % enable event reporting on AnalogInput1. This sends lick 'events' (5v
-    % threshold reached) to the state machine to be processed/counted.
-    A.SMeventsEnabled(1:4) = 1;
-    % This sets threshold voltages that we want to exceed to generate events.
-    % Here we use 5 volts.
-    A.Thresholds(1:4) = 5;
-    % ResetVoltages sets the lower voltage bound that must be crossed before a
-    % new event can trigger. Here we must go below 1 volt.
-    A.ResetVoltages(1:4) = 1;
-    % Tell the AnalogInput1 module to start reporting events to the
-    % state machine
-    A.startReportingEvents();
-    % start the oscilliscope.
-    A.scope();
-    A.scope_StartStop;
+    % used to indicate when middle stimulus should switch. this behavior is defined in  SoftCodeHandler.m
+    BpodSystem.Status.switchStimulusFlag = false;
+
+    % used to indicate when middle stimulus should switch. this behavior is defined in  SoftCodeHandler.m
+    BpodSystem.Status.consecutiveRatSkips = 0;
+
+    % configure the analog in. performed in configure_analog_in.m
+    A = configure_analog_in();
 
     S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
-    if isempty(fieldnames(S)) % If settings file was an empty struct, populate struct with default settings
+    if isempty(fieldnames(S)) % If /
 
         subj = BpodSystem.GUIData.SubjectName;
         dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\FakeSubject\Set_param_Ortho_Set_1\Session Settings\DefaultSettings.mat'];
@@ -103,331 +75,218 @@ function side_training_day_1_odor_right
         S.GUIPanels = rmfield(S.GUIPanels, {'Current_valve_assignments','Manual_Taste_Valves'});
 
         BpodSystem.ProtocolSettings = S;
-    end;
+    end
+
+    % port_1 is the instance of the class Port1
+    port_1 = LateralPort(1);
+    % port_3 is the instance of the class Port3
+    port_3 = LateralPort(3);
+    % center_port the instance of the class center_port
+    center_port = CenterPort;
+
+    correct_port = PortHandler;
+    incorrect_port = PortHandler;
 
     BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
-    % this variable is created to indicate when the protocol should halt (after 60 minutes). This is set
-    % in the softcode handler function 'BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler_exit'
-    BpodSystem.Status.ExitTrialLoop = false;
-
-    % do infinite trials while 60 minutes has not elapsed
-    while true
-
-        LoadSerialMessages('ValveModule1', {['O' CENTER_VALVE], ['C' CENTER_VALVE], ['O' LATERAL_VALVE], ['C' LATERAL_VALVE],['B' 00000000]}); % load valve for center port into serial messages.
-
-        center_valve_time_variable = sprintf('open_time_%d', CENTER_VALVE);
-        center_valve_time = BpodSystem.ProtocolSettings.GUI.(center_valve_time_variable)/1000;
-
-        port_3_valve_time_variable = sprintf('open_time_%d', PORT_3_VALVE);
-        port_3_valve_time = BpodSystem.ProtocolSettings.GUI.(port_3_valve_time_variable)/1000;
+    % do MAXIMUM_TRIALS as defined in ExperimentVariables file if 60 minutes has not elapsed.
+    for trial= 1:expV.MAXIMUM_TRIALS
+        BpodSystem.Status.trial  = trial;
+        trial
 
         S = BpodParameterGUI('sync', S);
 
         sma = NewStateMachine();
 
         % set global timers for the maximum duration of the experiment and the maximum sample time of 2 seconds.
-        sma = SetGlobalTimer(sma, 'TimerID', 1, 'Duration', SIXTY_MINUTES);
-        sma = SetGlobalTimer(sma, 'TimerID', 2, 'Duration', LICK_WINDOW);
+        sma = SetGlobalTimer(sma, 'TimerID', expV.experimentTimerID, 'Duration', expV.TOTAL_ALLOWED_TIME);
+        sma = SetGlobalTimer(sma, 'TimerID', expV.lickWindowTimerID, 'Duration', expV.LICK_WINDOW);
 
         % set global counters for each of the possible input ports (AnalogIn1 ports 1-4) to 6.
-        sma = SetGlobalCounter(sma, CENTER_1_COUNT_NUM, CENTER_INPUT, 6); % Arguments: (sma, CounterNumber, TargetEvent, Threshold)?
-        sma = SetGlobalCounter(sma, CENTER_2_COUNT_NUM, CENTER_INPUT_2, 6);
-        sma = SetGlobalCounter(sma, PORT_1_COUNT_NUM, PORT_1_INPUT, 6);
-        sma = SetGlobalCounter(sma, PORT_3_COUNT_NUM, PORT_3_INPUT, 6);
+        sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, 6); % Arguments: (sma, CounterNumber, TargetEvent, Threshold)?
+        %sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, 3);
+        %sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 3);
+        %sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 3);
+
+        % if this is the first trial 
+        if (trial == 1)
+            first_stimulus_valve = center_port.ODOR_VALVE;
+            first_stimulus_valve
+
+            center_port = center_port.setValve(1, first_stimulus_valve);
+
+            correct_port = correct_port.setCorrect(port_1, port_3, first_stimulus_valve);
+            incorrect_port = incorrect_port.setIncorrect(port_1, port_3, first_stimulus_valve);
+
+            correct_port
+            incorrect_port
+
+            sma = AddState(sma, 'Name', 'triggerExperimentTimer', ...
+                'Timer', 0,...
+                'StateChangeConditions', {'Tup', 'ITI'},...
+                'OutputActions',{'GlobalTimerTrig', 1});
+        end
+
+        BpodSystem.Data.centerValve(trial) = center_port.left_valve;
+        BpodSystem.Data.correctPort(trial) = correct_port.port;
 
 
-        % Initial TTC_Center state. This is the state entered at the end of every ITI time and the script remains here only while there are zero licks.
-
-        %State change conditions include:
-        % - tup -> move to new TTC
-        % - CENTER_INPUT-> rat interaction on port, move to 'firstCenterLick' state
-        % - GlobalTimer1_End -> sixty minute time limit is up, move to cleanup state to finish experiment
-
-        % OutputActions
-        % - Flex2DO remains on to keep center port open.
         sma = AddState(sma, 'Name', 'ITI', ...
-            'Timer', 5,...
-            'StateChangeConditions', {'Tup', 'TTC_Center', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, UP, 'GlobalTimerTrig', 1, 'GlobalCounterReset', CENTER_LICK_COUNTER});
+            'Timer', expV.ITI_TIME,...
+            'StateChangeConditions', {'Tup', 'TTC_Center', expV.experimentTimeExpired , 'cleanup'},...
+            'OutputActions',{center_port.DOOR, expV.UP, 'GlobalTimerTrig', expV.EXPERIMENT_TIMER_ID});
 
-        % Initial TTC_Center state. This is the state entered at the end of every ITI time and the script remains here only while there are zero licks.
-
-        %State change conditions include:
-        % - tup -> no rat interaction, move to new ITI by exiting this iteration (trial)
-        % - CENTER_INPUT-> rat interaction on port, move to 'firstCenterLick' state
-        % - GlobalTimer1_End -> sixty minute time limit is up, move to cleanup state to finish experiment
-
-        % OutputActions
-        % - Flex2DO remains on to keep center port open.
         sma = AddState(sma, 'Name', 'TTC_Center', ...
-            'Timer', 30,...
-            'StateChangeConditions', {'Tup', 'exit', CENTER_INPUT, 'firstCenterLick', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'GlobalCounterReset', CENTER_LICK_COUNTER});
+            'Timer', expV.TTC_CENTER_TIME,...
+            'StateChangeConditions', {'Tup', 'punish', center_port.LEFT_LICK_INPUT, 'firstCenterDryLick', expV.experimentTimeExpired , 'cleanup'},...
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'GlobalCounterReset', center_port.LEFT_COUNTER_ID, 'WavePlayer1', ['P' 8 0]});
 
-        % firstCenterLick triggers the global timer (sets 0) for available lick time (2 seconds) upon first lick. immediately transition to oddLick state,
-        % to wait for even lick
-
-        %State change conditions include:
-        % - tup -> immediately move to oddLick
-
-        % OutputActions
-        % - Flex2DO remains on to keep center port open.
-        sma = AddState(sma, 'Name', 'firstCenterLick', ...
+        sma = AddState(sma, 'Name', 'firstCenterDryLick', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'oddLick'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'GlobalTimerTrig', 2});
+            'StateChangeConditions', {center_port.LEFT_LICK_INPUT, 'firstRewardLick', expV.lickTimeExpired , 'punish' },...
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'GlobalTimerTrig', expV.LICK_WINDOW_TIMER_ID});
 
-        % oddLick state to handle the case where we've detected an odd lick and are waiting for even lick.
+        sma = AddState(sma, 'Name', 'firstRewardLick', ...
+            'Timer', center_port.left_valve_time,...
+            'StateChangeConditions', {'Tup', 'centerValveOff'},...
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.left_valve], 'BNC1', 1});
 
-        %State change conditions include:
-        % - CENTER_INPUT -> even lick, move to 'waterRewardLick' to dispense reward.
-        % - GlobalTimer1_End (60 minutes expired) -> cleanup state to exit state machine and save data
-        % - GlobalTimer2_End (2 seconds since first lick passed) -> back to ITI
-
-        % OutputActions
-        % - Flex2DO remains on to keep center port open.
-        sma = AddState(sma, 'Name', 'oddLick', ...
-            'Timer', 0,...
-            'StateChangeConditions', {CENTER_INPUT, 'waterRewardLick', 'GlobalTimer1_End', 'cleanup', 'GlobalTimer2_End', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN});
-
-
-        % waitForNonFirstOdd handles the case where we've just finished dispensing a reward, but have not yet detected another lick.
-        % It is an intermediate state, waiting for more licks to move on to other states.
-        % State change conditions include:
-        % - CENTER_INPUT -> move to oddLick to wait for an another even lick to dispense a reward
-        % - GlobalTimer1_End (60 minutes expired) -> cleanup state to exit state machine and save data
-        % - GlobalTimer2_End (2 seconds since first lick passed) -> back to ITI
-
-        % OutputActions
-        % - Flex2DO remains on to keep center port open.
-        sma = AddState(sma, 'Name', 'waitForNonFirstOdd', ...
-            'Timer', 0,...
-            'StateChangeConditions', {CENTER_INPUT, 'oddLick', 'GlobalTimer1_End', 'cleanup', 'GlobalTimer2_End', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'GlobalTimerTrig', 2});
-
-        % waterRewardLick handles the case where we've detected an even lick and need to dispense the water reward on port.
-        % State change conditions include:
-        % - tup -> immediately move to beginCenterValve to open the valve
-        % - GlobalTimer1_End (60 minutes expired) -> cleanup state to exit state machine and save data
-        % - GlobalCounter1_End -> 6th lick detected, move to ttc.
-
-        % OutputActions
-        % - Flex2DO remains on to keep center port open.
-        sma = AddState(sma, 'Name', 'waterRewardLick', ...
-            'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'beginCenterValve', 'GlobalTimer1_End', 'cleanup', CENTER_LICK_COMPLETE, 'TTC_Port_1'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN});
-
-        % beginCenterValve handles the opening of the center valve
-        % State change conditions include:
-        % - tup -> immediately move to beginCenterValve to open the valve
-        % - GlobalTimer1_End (60 minutes expired) -> cleanup state to exit state machine and save data
-
-        % OutputActions
-        % - Flex2DO remains on to keep center port open.
-        % - Call LoadSerialMessages number 1 (see line 74) on ValveModule1 to open the chosen valve.
-        % - Force BNC1 high (ttl logical 1) to activate extra valves during center valve opening.
-        sma = AddState(sma, 'Name', 'beginCenterValve', ...
-            'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'centerValveDelay', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'ValveModule1', 1, 'BNC1', 1});
-
-
-        % centerValveDelay delays the chosen valve 'center_valve_time' milliseconds. This is pulled from the valve calibration times.
-        % State change conditions include:
-        % - tup -> move to centerValveOff to close the valve after 'center_valve_time' milliseconds.
-        % - GlobalTimer1_End (60 minutes expired) -> cleanup state to exit state machine and save data
-
-        % OutputActions
-        % - Flex2DO remains on to keep center port open.
-        % - ValveModule1 remains on to keep the valve open.
-        % - BNC1 remains on to keep extra valves open during center valve opening.
-        sma = AddState(sma, 'Name', 'centerValveDelay', ...
-            'Timer', center_valve_time,...
-            'StateChangeConditions', {'Tup', 'centerValveOff', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'ValveModule1', 1, 'BNC1', 1});
-
-        % centerValveOff turns the center valve to the off (closed) position
-        % State change conditions include:
-        % - tup -> immediately move to 'waitForNonFirstOdd' state
-
-        % OutputActions
-        % - Flex2DO remains on to keep center port open.
-        % - Call LoadSerialMessages number 2 (see line 74) on ValveModule1 to open the chosen valve
-        % - Force BNC1 to low (ttl 0) state to turn off (close) extra valves
+        % end first reward, wait for third (dry)
         sma = AddState(sma, 'Name', 'centerValveOff', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'waitForNonFirstOdd', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'ValveModule1', 2, 'BNC1', 0});
+            'StateChangeConditions', {center_port.LEFT_LICK_INPUT, 'waitCenterLickFour', expV.lickTimeExpired , 'punish' },...
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.left_valve], 'BNC1', 0});
 
-        % TTC_Port_1 is extremely similar to 'TTC_Center', except we wait for licks on the lateral port (HERE THE LEFT PORT / PORT 1)
-        % State change conditions include:
-        % - tup -> immediately move to 'waitForNonFirstOdd' state
-
-        % OutputActions
-        % - Flex3DO opens to open the right port door.
-        % - Call LoadSerialMessages number 2 (see line 74) on ValveModule1 to open the chosen valve
-        % - Force BNC1 to low (ttl 0) state to turn off (close) extra valves
-        sma = AddState(sma, 'Name', 'TTC_Port_1', ...
-            'Timer', 60,...
-            'StateChangeConditions', {'Tup', 'exit', LATERAL_INPUT, 'firstLateralLick', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'GlobalCounterReset', LATERAL_LICK_COUNTER});
-
-        % firstLateralLick triggers the global timer (sets 0) for available lick time (2 seconds) upon first lick. immediately transition to oddLick state,
-        % to wait for even lick
-
-        %State change conditions include:
-        % - tup -> immediately move to oddLick
-
-        % OutputActions
-        % - Flex3DO remains on to keep center port open.
-        sma = AddState(sma, 'Name', 'firstLateralLick', ...
+        sma = AddState(sma, 'Name', 'waitCenterLickFour', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'oddLateralLick'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'GlobalTimerTrig', 2});
+            'StateChangeConditions', {center_port.LEFT_LICK_INPUT, 'openCenterValve2', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired , 'punish' },...
+            'OutputActions',{center_port.DOOR, expV.DOWN});
 
-        % oddLateralLick state to handle the case where we've detected an odd lick and are waiting for even lick.
+        sma = AddState(sma, 'Name', 'openCenterValve2', ...
+            'Timer', center_port.left_valve_time,...
+            'StateChangeConditions', {'Tup', 'centerValveOff2', expV.experimentTimeExpired , 'cleanup'},...
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.left_valve], 'BNC1', 1});
 
-        %State change conditions include:
-        % - AnalogIn1_3 -> even lick on the third capacitive board/left port, move to 'odorRewardLick' to dispense reward.
-        % - GlobalTimer1_End (60 minutes expired) -> cleanup state to exit state machine and save data
-        % - GlobalTimer2_End (2 seconds since first lick passed) -> back to ITI
-
-        % OutputActions
-        % - Flex3DO remains on to keep center port open.
-        sma = AddState(sma, 'Name', 'oddLateralLick', ...
+        sma = AddState(sma, 'Name', 'centerValveOff2', ...
             'Timer', 0,...
-            'StateChangeConditions', {LATERAL_INPUT, 'odorRewardLick', 'GlobalTimer1_End', 'cleanup', 'GlobalTimer2_End', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP});
+            'StateChangeConditions', {'Tup', 'waitRemainingCenterLicks', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired , 'punish' },...
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.left_valve], 'BNC1', 0});
 
-
-        % waitForNonFirstLateralOdd handles the case where we've just finished dispensing a reward, but have not yet detected another lick.
-        % It is an intermediate state, waiting for more licks to move on to other states.
-        % State change conditions include:
-        % - CENTER_INPUT -> move to oddLick to wait for an another even lick to dispense a reward
-        % - GlobalTimer1_End (60 minutes expired) -> cleanup state to exit state machine and save data
-        % - GlobalTimer2_End (2 seconds since first lick passed) -> back to ITI
-
-        % OutputActions
-        % - Flex3DO remains on to keep center port open.
-        sma = AddState(sma, 'Name', 'waitForNonFirstLateralOdd', ...
+        sma = AddState(sma, 'Name', 'waitRemainingCenterLicks', ...
             'Timer', 0,...
-            'StateChangeConditions', {LATERAL_INPUT, 'oddLateralLick', 'GlobalTimer1_End', 'cleanup', 'GlobalTimer2_End', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'GlobalTimerTrig', 2});
+            'StateChangeConditions', {center_port.LEFT_COUNTER_EVENT, 'ttcLateralTimeout', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired , 'punish'},...
+            'OutputActions',{center_port.DOOR, expV.DOWN});
 
-        % odorRewardLick handles the case where we've detected an even lick and need to dispense the water reward on port.
-        % State change conditions include:
-        % - tup -> immediately move to beginCenterValve to open the valve
-        % - GlobalTimer1_End (60 minutes expired) -> cleanup state to exit state machine and save data
-        % - GlobalCounter1_End -> 6th lick detected, move to ttc.
+        %%%%% BEGIN TTC ON THE LATERAL PORTS %%%%%
+        sma = AddState(sma, 'Name', 'ttcLateralTimeout', ...
+            'Timer', expV.LATERAL_DELAY,...
+            'StateChangeConditions', {'Tup', 'ttcLateral', expV.experimentTimeExpired , 'cleanup'},...
+            'OutputActions',{center_port.DOOR, expV.UP, 'GlobalCounterReset', port_3.COUNTER_ID, 'SoftCode', 3});
 
-        % OutputActions
-        % - Flex3DO remains on to keep center port open.
-        sma = AddState(sma, 'Name', 'odorRewardLick', ...
+        sma = AddState(sma, 'Name', 'ttcLateral', ...
+            'Timer', expV.TTC_LATERAL_TIME,...
+            'StateChangeConditions', {'Tup', 'exit', correct_port.lick_event, 'waitLateralRewardLick1', expV.experimentTimeExpired , 'cleanup'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'GlobalCounterReset', port_1.COUNTER_ID});
+
+        sma = AddState(sma, 'Name', 'waitLateralRewardLick1', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'beginLateralValve', 'GlobalTimer1_End', 'cleanup', PORT_1_COUNT_COMPLETE, 'rewardLick6_ITI'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP});
+            'StateChangeConditions', {correct_port.lick_event, 'openLateralReward1', expV.experimentTimeExpired , 'cleanup',...
+                expV.lickTimeExpired, 'exit'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'GlobalTimerTrig', expV.lickWindowTimerID});
 
+        sma = AddState(sma, 'Name', 'openLateralReward1', ...
+            'Timer', correct_port.valve_time,...
+            'StateChangeConditions', {'Tup', 'closeLateralReward1'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'ValveModule1', ['O', correct_port.valve], 'BNC1', 1});
 
-
-        % beginLateralValve handles the opening of the left valve
-        % State change conditions include:
-        % - tup -> immediately move to beginCenterValve to open the valve
-        % - GlobalTimer1_End (60 minutes expired) -> cleanup state to exit state machine and save data
-
-        % OutputActions
-        % - Flex3DO remains on to keep center port open.
-        % - Call LoadSerialMessages number 3 (see line 74) on ValveModule1 to open the left valve.
-        % - Force BNC1 high (ttl logical 1) to activate extra valves during center valve opening.
-        sma = AddState(sma, 'Name', 'beginLateralValve', ...
+        % end lick two, wait for lick 3 (dry) 
+        sma = AddState(sma, 'Name', 'closeLateralReward1', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'lateralValveDelay', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{PORT_1_DOOR, DOWN, CENTER_PORT_DOOR, UP, PORT_3_DOOR, UP, CENTER_PORT, LEFT_SPOUT, 'ValveModule1', 3, 'BNC1', 1});
+            'StateChangeConditions', {correct_port.lick_event, 'waitLateralRewardLick2'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'ValveModule1', ['C', correct_port.valve], 'BNC1', 0});
 
-
-        % lateralValveDelay delays the chosen valve 'port_1_valve_time' milliseconds. This is pulled from the valve calibration times.
-        % State change conditions include:
-        % - tup -> move to centerValveOff to close the valve after 'center_valve_time' milliseconds.
-        % - GlobalTimer1_End (60 minutes expired) -> cleanup state to exit state machine and save data
-
-        % OutputActions
-        % - Flex1DO remains on to keep center port open.
-        % - ValveModule1 remains on to keep the valve open.
-        % - BNC1 remains on to keep extra valves open during center valve opening.
-        sma = AddState(sma, 'Name', 'lateralValveDelay', ...
-            'Timer', center_valve_time,...
-            'StateChangeConditions', {'Tup', 'lateralValveOff', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'ValveModule1', 3, 'BNC1', 1});
-
-        % lateralValveOff turns the port 1 (left) valve to the off (closed) position
-        % State change conditions include:
-        % - tup -> immediately move to 'waitForNonFirstOdd' state
-
-        % OutputActions
-        % - Flex2DO remains on to keep center port open.
-        % - Call LoadSerialMessages number 4 (see line 74) on ValveModule1 to close the left valve
-        % - Force BNC1 to low (ttl 0) state to turn off (close) extra valves
-        sma = AddState(sma, 'Name', 'lateralValveOff', ...
+        sma = AddState(sma, 'Name', 'waitLateralRewardLick2', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'waitForNonFirstLateralOdd', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'ValveModule1', 4, 'BNC1', 0});
+            'StateChangeConditions', {correct_port.lick_event, 'openLateralReward2', expV.experimentTimeExpired , 'cleanup',...
+                expV.lickTimeExpired, 'exit'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'GlobalTimerTrig', expV.lickWindowTimerID});
 
-        % rewardLick6_ITI handles the case where we've detected the 6th lick and need to dispense the water reward on port, then exit the trial.
-        % State change conditions include:
-        % - tup -> immediately move to beginCenterValve to open the valve
-        % - GlobalTimer1_End (60 minutes expired) -> cleanup state to exit state machine and save data
-        % - GlobalCounter1_End -> 6th lick detected, move to ttc.
+        % lick four, reward
+        sma = AddState(sma, 'Name', 'openLateralReward2', ...
+            'Timer', correct_port.valve_time,...
+            'StateChangeConditions', {'Tup', 'closeLateralReward2'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'ValveModule1', ['O', correct_port.valve], 'BNC1', 1});
 
-        % OutputActions
-        % - Flex2DO remains on to keep center port open.
-        sma = AddState(sma, 'Name', 'rewardLick6_ITI', ...
+        % end lick four, wait dry 5
+        sma = AddState(sma, 'Name', 'closeLateralReward2', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'lick_6_beginLateralValve', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP});
+            'StateChangeConditions', {correct_port.lick_event, 'waitLateralRewardLick3'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'ValveModule1', ['C', correct_port.valve], 'BNC1', 0});
 
-        sma = AddState(sma, 'Name', 'lick_6_beginLateralValve', ...
+        sma = AddState(sma, 'Name', 'waitLateralRewardLick3', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'lick_6_lateralValveDelay', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'ValveModule1', 3, 'BNC1', 1});
+            'StateChangeConditions', {correct_port.lick_event, 'openLateralReward3', expV.experimentTimeExpired , 'cleanup',...
+                expV.lickTimeExpired, 'exit'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'GlobalTimerTrig', expV.lickWindowTimerID});
 
-        sma = AddState(sma, 'Name', 'lick_6_lateralValveDelay', ...
-            'Timer', center_valve_time,...
-            'StateChangeConditions', {'Tup', 'lick_6_lateralValveOff', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'ValveModule1', 3, 'BNC1', 1});
+        sma = AddState(sma, 'Name', 'openLateralReward3', ...
+            'Timer', correct_port.valve_time,...
+            'StateChangeConditions', {'Tup', 'closeLateralReward3'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'ValveModule1', ['O', correct_port.valve], 'BNC1', 1});
 
-        sma = AddState(sma, 'Name', 'lick_6_lateralValveOff', ...
+        sma = AddState(sma, 'Name', 'closeLateralReward3', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'exit', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'ValveModule1', 4, 'BNC1', 0});
+            'StateChangeConditions', {'Tup', 'reportCorrectSelection'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'ValveModule1', ['C', correct_port.valve], 'BNC1', 0});
+
+        sma = AddState(sma, 'Name', 'punish', ...
+            'Timer', expV.PUNISHMENT_TIME,...
+            'StateChangeConditions', {'Tup', 'resetCorrectCounter'},...
+            'OutputActions',{port_1.DOOR, expV.UP, 'SoftCode', 2});
+
+        sma = AddState(sma, 'Name', 'reportCorrectSelection', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'resetCorrectCounter'},...
+            'OutputActions',{'SoftCode', 15});
+
+        sma = AddState(sma, 'Name', 'resetCorrectCounter', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'resetIncorrectCounter'},...
+            'OutputActions',{'GlobalCounterReset', correct_port.lick_counter_id});
+
+        sma = AddState(sma, 'Name', 'resetIncorrectCounter', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'resetCenterCounter'},...
+            'OutputActions',{'GlobalCounterReset', incorrect_port.lick_counter_id});
+
+        sma = AddState(sma, 'Name', 'resetCenterCounter', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'exit'},...
+            'OutputActions',{'GlobalCounterReset', center_port.LEFT_COUNTER_ID});
 
         sma = AddState(sma, 'Name', 'cleanup', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, UP, 'ValveModule1', 5, 'BNC1', 0, 'SoftCode', 3});
+            'OutputActions',{port_1.DOOR, expV.UP, port_3.DOOR, expV.UP, 'ValveModule1', ['B' 00000000], 'BNC1', 0, 'SoftCode', 1});
 
         % function will check if softcode '3' has been sent by the state machine in cleanup state. if it has, it is time to exit the
         % trial loop.
-        BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler_exit';
+        BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler';
 
         SendStateMachine(sma);
-        events = RunStateMachine();
+        trial_events = RunStateMachine();
 
-            if ~isempty(fieldnames(events)) % If you didn't stop the session manually mid-trial
-                    BpodSystem.Data = AddTrialEvents(BpodSystem.Data,events); % Adds raw events to a human-readable data struct
-                        SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
-                    end
+        if ~isempty(fieldnames(trial_events)) % If you didn't stop the session manually mid-trial
+            BpodSystem.Data = AddTrialEvents(BpodSystem.Data, trial_events); % Adds raw events to a human-readable data struct
+            SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
+        end
 
-                    HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
+        HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
 
-                    if (BpodSystem.Status.ExitTrialLoop == 1 || BpodSystem.Status.BeingUsed == 0)
-                        A.scope_StartStop;
-                        A.endAcq; % Close Oscope GUI
-                        A.stopReportingEvents; % Stop sending events to state machine
-                        clear A
-                        RunProtocol('Stop')
-                        return
-                    end
+        if (BpodSystem.Status.ExitTrialLoop == 1 || BpodSystem.Status.BeingUsed == 0)
+            stop_experiment(A, W);
+            return
+        end
 
-                end
+    end
+end

@@ -1,82 +1,53 @@
 %% Code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
 % SIDE TRAiNING DAYS 5-6 | ODOR CENTER | VALVE 5 CENTER | LEFT PORT REWARD
-
 function side_training_day_1_odor_right
     global BpodSystem
 
-    SIXTY_MINUTES = 30; %seconds.
+    W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1);
+    W.SamplingRate = 44100;
 
-    timer_set = 0;
+    Fs = 44100;    % Sampling rate in Hz (e.g., CD quality)
+    T = .5;         % Duration in seconds
+    f = 800;       % Frequency of the tone in Hz
 
-    % these varaibles are used to make door commands more intuitive and easy to understand & read.
-    UP = 0;
-    DOWN = 1;
-    LEFT_SPOUT = 0;
-    RIGHT_SPOUT = 1;
+    % Generate the time vector
+    t = 0:1/Fs:T;
 
-    LICK_WINDOW = 2; % Defines amount of seconds rat has to complete required amount of licks.
+    % Generate the sinusoidal waveform
+    y = sin(2*pi*f*t);
+    %Five_volts = 5 * ones(1, W.SamplingRate/1000); % 1ms 5Volt signal
+    W.loadWaveform(1, y);         % Loads a sound as waveform 1
 
-    %%%%%% MAJOR DIFFERENCE FROM ODOR CENTER FILE. VALVE IS CHANGED FROM 2->5. %%%%%%
-    CENTER_VALVE = 5;
-    PORT_1_VALVE = 1;
-    PORT_3_VALVE = 8;
+    %expV is used to access experiment constants
+    expV = ExperimentVariables;
 
-    LATERAL_VALVE = PORT_1_VALVE;
+    % this variable is created to indicate when the protocol should halt (after 60 minutes). This is set
+    % in the softcode handler function 'BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler_exit'
+    BpodSystem.Status.ExitTrialLoop = false;
 
-    % remap unhelpful analoginput port number strings to variables that can easily be changed
-    % to make the code more reusable.
-    CENTER_LICK = 'AnalogIn1_1';
-    CENTER_LICK_2 = 'AnalogIn1_2'; % input for the second spout in the center port.
-    PORT_1_INPUT = 'AnalogIn1_3';
-    PORT_3_INPUT = 'AnalogIn1_4';
+    % global variable that will be accessed when SoftCode15 is sent indicating a correct trial selection
+    BpodSystem.Data.CorrectTrials = 0;
 
-    PORT_1_DOOR = 'Flex1DO';
-    CENTER_PORT_DOOR = 'Flex2DO';
-    PORT_3_DOOR = 'Flex3DO';
-    CENTER_PORT = 'Flex4DO';
+    BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
 
-    % these variables are the numbers of the global counters that are used to track
-    % lick counts. The numbers are stored in variables here to make this script
-    % reusable and give the ability to easily flip the desired port.
-    CENTER_1_COUNT_NUM = 1;
-    CENTER_2_COUNT_NUM = 2;
-    PORT_1_COUNT_NUM = 3;
-    PORT_3_COUNT_NUM = 4;
+    BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
 
-    CENTER_1_COUNT_COMPLETE = 'GlobalCounter1_End';
-    CENTER_2_COUNT_COMPLETE = 'GlobalCounter2_End';
-    PORT_1_COUNT_COMPLETE = 'GlobalCounter3_End';
-    PORT_3_COUNT_COMPLETE = 'GlobalCounter4_End';
+    BpodSystem.Data.trialsEngaged = zeros(expV.MAXIMUM_TRIALS, 1);
 
-    % save port_1 variables into lateral variables. This way, we can copy this EXACT script and
-    % change ONLY these variables to PORT_3 to flip the 'correct' side.
-    LATERAL_INPUT = PORT_1_INPUT;
-    LATERAL_DOOR = PORT_1_DOOR;
-    LATERAL_LICK_COUNTER = PORT_1_COUNT_NUM;
-    LATERAL_COUNTER_COMPLETE = PORT_1_COUNT_COMPLETE;
+    BpodSystem.Status.trial = 1;
 
-    CENTER_LICK_COUNTER = CENTER_1_COUNT_NUM;
 
-    A = BpodAnalogIn(BpodSystem.ModuleUSB.AnalogIn1);
-    A.nActiveChannels = 4;
-    % enable event reporting on AnalogInput1. This sends lick 'events' (5v
-    % threshold reached) to the state machine to be processed/counted.
-    A.SMeventsEnabled(1:4) = 1;
-    % This sets threshold voltages that we want to exceed to generate events.
-    % Here we use 5 volts.
-    A.Thresholds(1:4) = 5;
-    % ResetVoltages sets the lower voltage bound that must be crossed before a
-    % new event can trigger. Here we must go below 1 volt.
-    A.ResetVoltages(1:4) = 1;
-    % Tell the AnalogInput1 module to start reporting events to the
-    % state machine
-    A.startReportingEvents();
-    % start the oscilliscope.
-    A.scope();
-    A.scope_StartStop;
+    % used to indicate when middle stimulus should switch. this behavior is defined in  SoftCodeHandler.m
+    BpodSystem.Status.switchStimulusFlag = false;
+
+    % used to indicate when middle stimulus should switch. this behavior is defined in  SoftCodeHandler.m
+    BpodSystem.Status.consecutiveRatSkips = 0;
+
+    % configure the analog in. performed in configure_analog_in.m
+    A = configure_analog_in();
 
     S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
-    if isempty(fieldnames(S)) % If settings file was an empty struct, populate struct with default settings
+    if isempty(fieldnames(S)) % If /
 
         subj = BpodSystem.GUIData.SubjectName;
         dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\FakeSubject\Set_param_Ortho_Set_1\Session Settings\DefaultSettings.mat'];
@@ -103,200 +74,260 @@ function side_training_day_1_odor_right
         S.GUIPanels = rmfield(S.GUIPanels, {'Current_valve_assignments','Manual_Taste_Valves'});
 
         BpodSystem.ProtocolSettings = S;
-    end;
+    end
+
+    % port_1 is the instance of the class Port1
+    port_1 = LateralPort(1);
+    % port_3 is the instance of the class Port3
+    port_3 = LateralPort(3);
+    % center_port the instance of the class center_port
+    center_port = CenterPort;
+
+    correct_port = PortHandler;
+    incorrect_port = PortHandler;
 
     BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
-    % this variable is created to indicate when the protocol should halt (after 60 minutes). This is set
-    % in the softcode handler function 'BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler_exit'
-    BpodSystem.Status.ExitTrialLoop = false;
-
-    % do infinite trials while 60 minutes has not elapsed
-    while true
-        center_valve_time_variable = sprintf('open_time_%d', CENTER_VALVE);
-        center_valve_time = BpodSystem.ProtocolSettings.GUI.(center_valve_time_variable)/1000;
-
-        port_1_valve_time_variable = sprintf('open_time_%d', PORT_1_VALVE);
-        port_1_valve_time = BpodSystem.ProtocolSettings.GUI.(port_1_valve_time_variable)/1000;
-
-        port_3_valve_time_variable = sprintf('open_time_%d', PORT_3_VALVE);
-        port_3_valve_time = BpodSystem.ProtocolSettings.GUI.(port_3_valve_time_variable)/1000;
-
-        lateral_valve_time =  port_1_valve_time;
+    % do MAXIMUM_TRIALS as defined in ExperimentVariables file if 60 minutes has not elapsed.
+    for trial= 1:expV.MAXIMUM_TRIALS
+        BpodSystem.Status.trial  = trial;
+        trial
 
         S = BpodParameterGUI('sync', S);
 
         sma = NewStateMachine();
 
-
         % set global timers for the maximum duration of the experiment and the maximum sample time of 2 seconds.
-        sma = SetGlobalTimer(sma, 'TimerID', 1, 'Duration', SIXTY_MINUTES);
-        sma = SetGlobalTimer(sma, 'TimerID', 2, 'Duration', LICK_WINDOW);
+        sma = SetGlobalTimer(sma, 'TimerID', expV.experimentTimerID, 'Duration', expV.TOTAL_ALLOWED_TIME);
+        sma = SetGlobalTimer(sma, 'TimerID', expV.lickWindowTimerID, 'Duration', expV.LICK_WINDOW);
 
         % set global counters for each of the possible input ports (AnalogIn1 ports 1-4) to 6.
-        sma = SetGlobalCounter(sma, CENTER_1_COUNT_NUM, CENTER_LICK, 3); % Arguments: (sma, CounterNumber, TargetEvent, Threshold)?
-        sma = SetGlobalCounter(sma, CENTER_2_COUNT_NUM, CENTER_LICK_2, 3);
-        sma = SetGlobalCounter(sma, PORT_1_COUNT_NUM, PORT_1_INPUT, 3);
-        sma = SetGlobalCounter(sma, PORT_3_COUNT_NUM, PORT_3_INPUT, 3);
+        sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, 3); % Arguments: (sma, CounterNumber, TargetEvent, Threshold)?
+        sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, 3);
+        sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 3);
+        sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 3);
 
-        if (timer_set ==0)
+        % if this is the first trial 
+        if (trial == 1)
+            first_stimulus_valve = center_port.ODOR_VALVE; % ODOR_VALVE == 5
+            first_stimulus_valve
+
+            center_port = center_port.setValve(1, first_stimulus_valve);
+
+            correct_port = correct_port.setCorrect(port_1, port_3, first_stimulus_valve);
+            incorrect_port = incorrect_port.setIncorrect(port_1, port_3, first_stimulus_valve);
+
+            correct_port
+            incorrect_port
+
             sma = AddState(sma, 'Name', 'triggerExperimentTimer', ...
                 'Timer', 0,...
                 'StateChangeConditions', {'Tup', 'ITI'},...
                 'OutputActions',{'GlobalTimerTrig', 1});
-
-            timer_set = 1;
         end
 
+        if (BpodSystem.Status.switchStimulusFlag)
+            % switch correct and incorrect
+            center_port = center_port.switchLeftValve();
+
+            % select correct and incorrect port based on center_port.left_valve
+            correct_port = correct_port.setCorrect(port_1, port_3, center_port.left_valve);
+            incorrect_port = incorrect_port.setIncorrect(port_1, port_3, center_port.left_valve);
+
+            % reset the flag
+            BpodSystem.Status.switchStimulusFlag = false;
+
+            correct_port
+            incorrect_port
+
+        end
+
+        if (mod(trial, (expV.TRIALS_PER_BLOCK + 1)) == 0)
+            % new trial *block*, reset consecutiveRatSkips
+            BpodSystem.Status.consecutiveRatSkips = 0;
+        end
+
+        if (expV.MINIMUM_TRIALS) % evaluate if minimum trial number is reached, and if 10 consecutive traials have been skipped
+            if(BpodSystem.Status.consecutiveRatSkips >= 10)
+                stop_experiment(A, W);
+                return
+            end
+        end
+
+        BpodSystem.Data.centerValve(trial) = center_port.left_valve;
+        BpodSystem.Data.correctPort(trial) = correct_port.port;
+
+
         sma = AddState(sma, 'Name', 'ITI', ...
-            'Timer', 5,...
-            'StateChangeConditions', {'Tup', 'TTC_Center', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, UP, 'GlobalTimerTrig', 1});
+            'Timer', expV.ITI_TIME,...
+            'StateChangeConditions', {'Tup', 'TTC_Center', expV.experimentTimeExpired , 'cleanup'},...
+            'OutputActions',{center_port.DOOR, expV.UP, 'GlobalTimerTrig', expV.EXPERIMENT_TIMER_ID});
 
         sma = AddState(sma, 'Name', 'TTC_Center', ...
-            'Timer', 30,...
-            'StateChangeConditions', {'Tup', 'exit', CENTER_LICK, 'firstLick', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'GlobalCounterReset', CENTER_LICK_COUNTER});
-        
-        sma = AddState(sma, 'Name', 'firstLick', ...
+            'Timer', expV.TTC_CENTER_TIME,...
+            'StateChangeConditions', {'Tup', 'punish', center_port.LEFT_LICK_INPUT, 'firstCenterLick', expV.experimentTimeExpired , 'cleanup'},...
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'GlobalCounterReset', center_port.LEFT_COUNTER_ID, 'WavePlayer1', ['P' 8 0]});
+
+        sma = AddState(sma, 'Name', 'firstCenterLick', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'waitForRemainingCenterDryLicks'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'GlobalTimerTrig', 2});
-        
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'GlobalTimerTrig', expV.LICK_WINDOW_TIMER_ID});
+
         sma = AddState(sma, 'Name', 'waitForRemainingCenterDryLicks', ...
             'Timer', 0,...
-            'StateChangeConditions', {CENTER_1_COUNT_COMPLETE, 'waitCenterRewardLick1', 'GlobalTimer1_End', 'cleanup', 'GlobalTimer2_End', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN});
+            'StateChangeConditions', {center_port.LEFT_COUNTER_EVENT, 'waitCenterRewardLick1', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired , 'punish'},...
+            'OutputActions',{center_port.DOOR, expV.DOWN});
 
         sma = AddState(sma, 'Name', 'waitCenterRewardLick1', ...
             'Timer', 0,...
-            'StateChangeConditions', {CENTER_LICK, 'openCenterValve', 'GlobalTimer1_End', 'cleanup', 'GlobalTimer2_End', 'exit' },...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN});
+            'StateChangeConditions', {center_port.LEFT_LICK_INPUT, 'openCenterValve', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired , 'punish' },...
+            'OutputActions',{center_port.DOOR, expV.DOWN});
 
         sma = AddState(sma, 'Name', 'openCenterValve', ...
-            'Timer', center_valve_time,...
+            'Timer', center_port.left_valve_time,...
             'StateChangeConditions', {'Tup', 'centerValveOff'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'ValveModule1', ['O' CENTER_VALVE], 'BNC1', 1});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.left_valve], 'BNC1', 1});
 
         sma = AddState(sma, 'Name', 'centerValveOff', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'waitCenterRewardLick2'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'ValveModule1', ['C' CENTER_VALVE], 'BNC1', 0});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.left_valve], 'BNC1', 0});
 
         sma = AddState(sma, 'Name', 'waitCenterRewardLick2', ...
             'Timer', 0,...
-            'StateChangeConditions', {CENTER_LICK, 'openCenterValve2', 'GlobalTimer1_End', 'cleanup', 'GlobalTimer2_End', 'exit' },...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN});
+            'StateChangeConditions', {center_port.LEFT_LICK_INPUT, 'openCenterValve2', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired , 'punish' },...
+            'OutputActions',{center_port.DOOR, expV.DOWN});
 
         sma = AddState(sma, 'Name', 'openCenterValve2', ...
-            'Timer', center_valve_time,...
-            'StateChangeConditions', {'Tup', 'centerValveOff2', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'ValveModule1', ['O' CENTER_VALVE], 'BNC1', 1});
+            'Timer', center_port.left_valve_time,...
+            'StateChangeConditions', {'Tup', 'centerValveOff2', expV.experimentTimeExpired , 'cleanup'},...
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.left_valve], 'BNC1', 1});
 
         sma = AddState(sma, 'Name', 'centerValveOff2', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'waitSixthLick', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'ValveModule1', ['C' CENTER_VALVE], 'BNC1', 0});
+            'StateChangeConditions', {'Tup', 'waitSixthLick', expV.experimentTimeExpired , 'cleanup'},...
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.left_valve], 'BNC1', 0});
 
         sma = AddState(sma, 'Name', 'waitSixthLick', ...
             'Timer', 0,...
-            'StateChangeConditions', {CENTER_LICK, 'ttcLateralTimeout', 'GlobalTimer1_End', 'cleanup', 'GlobalTimer2_End', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, DOWN, 'ValveModule1', ['C' CENTER_VALVE], 'BNC1', 0});
+            'StateChangeConditions', {center_port.LEFT_LICK_INPUT, 'ttcLateralTimeout', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired , 'punish'},...
+            'OutputActions',{center_port.DOOR, expV.DOWN});
 
 
-        %%%%% BEGIN TTC ON THE LATERAL PORT %%%%%
+        %%%%% BEGIN TTC ON THE LATERAL PORTS %%%%%
         sma = AddState(sma, 'Name', 'ttcLateralTimeout', ...
-            'Timer', 3,...
-            'StateChangeConditions', {'Tup', 'ttcLateral', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, UP});
-            
+            'Timer', expV.LATERAL_DELAY,...
+            'StateChangeConditions', {'Tup', 'ttcLateral', expV.experimentTimeExpired , 'cleanup'},...
+            'OutputActions',{center_port.DOOR, expV.UP, 'GlobalCounterReset', port_3.COUNTER_ID, 'SoftCode', 3});
+
         sma = AddState(sma, 'Name', 'ttcLateral', ...
-            'Timer', 30,...
-            'StateChangeConditions', {'Tup', 'exit', LATERAL_INPUT, 'firstLateralLick', 'GlobalTimer1_End', 'cleanup'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'GlobalCounterReset', LATERAL_LICK_COUNTER});
-        
-        sma = AddState(sma, 'Name', 'firstLateralLick', ...
-            'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'waitForRemainingLateralDryLicks'},...
-            'OutputActions',{LATERAL_DOOR, DOWN,CENTER_PORT_DOOR, UP, 'GlobalTimerTrig', 2});
-        
-        sma = AddState(sma, 'Name', 'waitForRemainingLateralDryLicks', ...
-            'Timer', 0,...
-            'StateChangeConditions', {LATERAL_COUNTER_COMPLETE, 'waitForLateralReward1', 'GlobalTimer1_End', 'cleanup', 'GlobalTimer2_End', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP});
+            'Timer', expV.TTC_LATERAL_TIME,...
+            'StateChangeConditions', {'Tup', 'exit', correct_port.lick_event, 'waitLateralDryLicks', incorrect_port.lick_event,...
+                'waitLateralDryLicks' expV.experimentTimeExpired , 'cleanup'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'GlobalCounterReset', port_1.COUNTER_ID});
 
-        sma = AddState(sma, 'Name', 'waitForLateralReward1', ...
+        sma = AddState(sma, 'Name', 'waitLateralDryLicks', ...
             'Timer', 0,...
-            'StateChangeConditions', {LATERAL_INPUT, 'openLateralValve1', 'GlobalTimer2_End', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'GlobalTimerTrig', 2});
+            'StateChangeConditions', {correct_port.lick_counter_event, 'waitLateralRewardLick1', incorrect_port.lick_counter_event, 'punish', expV.experimentTimeExpired , 'cleanup',...
+                expV.lickTimeExpired, 'exit'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'GlobalTimerTrig', expV.lickWindowTimerID});
 
-        sma = AddState(sma, 'Name', 'openLateralValve1', ...
-            'Timer', lateral_valve_time,...
-            'StateChangeConditions', {'Tup', 'closeLateralValve1'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'ValveModule1', ['O' LATERAL_VALVE], 'BNC1', 1});
+        sma = AddState(sma, 'Name', 'waitLateralRewardLick1', ...
+            'Timer', 0,...
+            'StateChangeConditions', {correct_port.lick_event, 'openLateralReward1', expV.experimentTimeExpired , 'cleanup',...
+                expV.lickTimeExpired, 'exit'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN});
 
-        sma = AddState(sma, 'Name', 'closeLateralValve1', ...
-            'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'waitForLateralReward2'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'ValveModule1', ['C' LATERAL_VALVE], 'BNC1', 0});
-        
-        sma = AddState(sma, 'Name', 'waitForLateralReward2', ...
-            'Timer', 0,...
-            'StateChangeConditions', {LATERAL_INPUT, 'openLateralValve2', 'GlobalTimer1_End', 'cleanup', 'GlobalTimer2_End', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP});
-        
-        sma = AddState(sma, 'Name', 'openLateralValve2', ...
-            'Timer', lateral_valve_time,...
-            'StateChangeConditions', {'Tup', 'closeLateralValve2'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'ValveModule1', ['O' LATERAL_VALVE], 'BNC1', 1});
+        sma = AddState(sma, 'Name', 'openLateralReward1', ...
+            'Timer', correct_port.valve_time,...
+            'StateChangeConditions', {'Tup', 'closeLateralReward1'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'ValveModule1', ['O', correct_port.valve], 'BNC1', 1});
 
-        sma = AddState(sma, 'Name', 'closeLateralValve2', ...
+        sma = AddState(sma, 'Name', 'closeLateralReward1', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'waitForLateralReward3'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'ValveModule1', ['C' LATERAL_VALVE], 'BNC1', 0});
-        
-        sma = AddState(sma, 'Name', 'waitForLateralReward3', ...
-            'Timer', 0,...
-            'StateChangeConditions', {LATERAL_INPUT, 'openLateralValve3', 'GlobalTimer1_End', 'cleanup', 'GlobalTimer2_End', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP});
-        
-        sma = AddState(sma, 'Name', 'openLateralValve3', ...
-            'Timer', lateral_valve_time,...
-            'StateChangeConditions', {'Tup', 'closeLateralValve3'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'ValveModule1', ['O' LATERAL_VALVE], 'BNC1', 1});
+            'StateChangeConditions', {'Tup', 'waitLateralRewardLick2'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'ValveModule1', ['C', correct_port.valve], 'BNC1', 0});
 
-        sma = AddState(sma, 'Name', 'closeLateralValve3', ...
+        sma = AddState(sma, 'Name', 'waitLateralRewardLick2', ...
+            'Timer', 0,...
+            'StateChangeConditions', {correct_port.lick_event, 'openLateralReward2', expV.experimentTimeExpired , 'cleanup',...
+                expV.lickTimeExpired, 'exit'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN});
+
+        sma = AddState(sma, 'Name', 'openLateralReward2', ...
+            'Timer', correct_port.valve_time,...
+            'StateChangeConditions', {'Tup', 'closeLateralReward2'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'ValveModule1', ['O', correct_port.valve], 'BNC1', 1});
+
+        sma = AddState(sma, 'Name', 'closeLateralReward2', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'waitLateralRewardLick3'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'ValveModule1', ['C', correct_port.valve], 'BNC1', 0});
+
+        sma = AddState(sma, 'Name', 'waitLateralRewardLick3', ...
+            'Timer', 0,...
+            'StateChangeConditions', {correct_port.lick_event, 'openLateralReward3', expV.experimentTimeExpired , 'cleanup',...
+                expV.lickTimeExpired, 'exit'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN});
+
+        sma = AddState(sma, 'Name', 'openLateralReward3', ...
+            'Timer', correct_port.valve_time,...
+            'StateChangeConditions', {'Tup', 'closeLateralReward3'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN,'ValveModule1', ['O', correct_port.valve], 'BNC1', 1});
+
+        sma = AddState(sma, 'Name', 'closeLateralReward3', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'reportCorrectSelection'},...
+            'OutputActions',{port_1.DOOR, expV.DOWN, 'ValveModule1', ['C', correct_port.valve], 'BNC1', 0});
+
+        sma = AddState(sma, 'Name', 'punish', ...
+            'Timer', expV.PUNISHMENT_TIME,...
+            'StateChangeConditions', {'Tup', 'resetCorrectCounter'},...
+            'OutputActions',{port_1.DOOR, expV.UP, 'SoftCode', 2});
+
+        sma = AddState(sma, 'Name', 'reportCorrectSelection', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'resetCorrectCounter'},...
+            'OutputActions',{'SoftCode', 15});
+
+        sma = AddState(sma, 'Name', 'resetCorrectCounter', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'resetIncorrectCounter'},...
+            'OutputActions',{'GlobalCounterReset', correct_port.lick_counter_id});
+
+        sma = AddState(sma, 'Name', 'resetIncorrectCounter', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'resetCenterCounter'},...
+            'OutputActions',{'GlobalCounterReset', incorrect_port.lick_counter_id});
+
+        sma = AddState(sma, 'Name', 'resetCenterCounter', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, DOWN, CENTER_PORT_DOOR, UP, 'ValveModule1', ['C' LATERAL_VALVE], 'BNC1', 0});
+            'OutputActions',{'GlobalCounterReset', center_port.LEFT_COUNTER_ID});
 
         sma = AddState(sma, 'Name', 'cleanup', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'exit'},...
-            'OutputActions',{LATERAL_DOOR, UP, CENTER_PORT_DOOR, UP, 'ValveModule1', ['B' 00000000], 'BNC1', 0, 'SoftCode', 3});
+            'OutputActions',{port_1.DOOR, expV.UP, port_3.DOOR, expV.UP, 'ValveModule1', ['B' 00000000], 'BNC1', 0, 'SoftCode', 1});
 
         % function will check if softcode '3' has been sent by the state machine in cleanup state. if it has, it is time to exit the
         % trial loop.
         BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler';
 
         SendStateMachine(sma);
-        events = RunStateMachine();
+        trial_events = RunStateMachine();
 
-            if ~isempty(fieldnames(events)) % If you didn't stop the session manually mid-trial
-                    BpodSystem.Data = AddTrialEvents(BpodSystem.Data,events); % Adds raw events to a human-readable data struct
-                        SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
-                    end
+        if ~isempty(fieldnames(trial_events)) % If you didn't stop the session manually mid-trial
+            BpodSystem.Data = AddTrialEvents(BpodSystem.Data, trial_events); % Adds raw events to a human-readable data struct
+            SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
+        end
 
-                    HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
+        HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
 
-                    if (BpodSystem.Status.ExitTrialLoop == 1 || BpodSystem.Status.BeingUsed == 0)
-                        A.scope_StartStop;
-                        A.endAcq; % Close Oscope GUI
-                        A.stopReportingEvents; % Stop sending events to state machine
-                        clear A
-                        RunProtocol('Stop')
-                        return
-                    end
-
-                end
+        if (BpodSystem.Status.ExitTrialLoop == 1 || BpodSystem.Status.BeingUsed == 0)
+            stop_experiment(A, W);
+            return
+        end
+    end
+end
 
