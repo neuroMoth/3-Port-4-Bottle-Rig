@@ -7,4 +7,3 @@ stimuli_lines = (1:Set_param_constants.NUM_VALVES); % Lines will be numbered 1 t
 [~,~,Perms] = uniqperms(stimuli_lines);  % use the function uniqperm to generate unique permutation depending on the taste
 stimuli_sequence = reshape(Perms', 1, []);
 stimuli_sequence = stimuli_sequence(1:BpodSystem.ProtocolSettings.GUI.num_trials);
-stimuli_sequence

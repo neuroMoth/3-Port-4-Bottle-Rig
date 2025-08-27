@@ -4,13 +4,13 @@ function protocol_settings = default_protocol_settings(protocol_settings, valves
     
 
     valve_labels = {'1','2','3','4','5', '6', '7', '8'};
-    liquid_amount_options = {'1','1.5','2','2.5','3','3.5','4','4.5','5','5.5','6','6.5','7','7.5','8','8.5'};
+    liquid_amount_options = {'1','1.5','2','2.5','3','3.5','4','4.5','5','5.5','6','6.5','7','7.5','8','8.5', '10'};
 
-    default_liquid_index = find(cellfun(@(x) strcmp(x,'5'), liquid_amount_options));
+    default_liquid_index = find(cellfun(@(x) strcmp(x,'10'), liquid_amount_options));
 
     protocol_settings = create_popup_menu(protocol_settings, "select_taste_valve", 1, valve_labels);
 
-    protocol_settings = create_popup_menu(protocol_settings, "select_amount_liquid_ul", 9, liquid_amount_options);
+    protocol_settings = create_popup_menu(protocol_settings, "select_amount_liquid_ul", 17, liquid_amount_options);
 
     calibration_or_manual_values = {'Use Calibration Values', 'Manually Set Opening Times'};
     protocol_settings = create_popup_menu(protocol_settings, "calibration_or_clean", 1, calibration_or_manual_values);

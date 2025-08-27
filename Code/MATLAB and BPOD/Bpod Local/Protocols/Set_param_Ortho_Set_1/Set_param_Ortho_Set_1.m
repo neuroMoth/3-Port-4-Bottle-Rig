@@ -58,7 +58,7 @@ valves = ValveDetails.empty();
 for i = 1:Set_param_constants.NUM_VALVES
 
     valve_open_time_def = GetValveTimes(5,i); 
-    new_valve = ValveDetails(i, 5, valve_open_time_def);
+    new_valve = ValveDetails(i, 10, valve_open_time_def);
 
     valves(end +1) = new_valve;
 end

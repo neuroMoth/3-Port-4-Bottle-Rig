@@ -12,7 +12,7 @@ function SoftCodeHandler(Byte)
             BpodSystem.Status.consecutiveRatSkips = BpodSystem.Status.consecutiveRatSkips + 1; 
             BpodSystem.Status.consecutiveRatSkips 
             
-            BpodSystem.Data.trialsEngaged(trial) = 0;
+            BpodSystem.Data.trialsEngaged(BpodSystem.Status.trial) = 0;
         case 3 
             trial = BpodSystem.Status.trial;
             % trial *was* engaged, reset consecutiveRatSkips

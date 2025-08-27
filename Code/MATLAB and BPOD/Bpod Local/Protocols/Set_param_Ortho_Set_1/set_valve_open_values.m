@@ -29,6 +29,7 @@ function settings_struct = set_valve_open_values(settings_struct, valves, type_d
 
         switch(type_durations)
             case 'calibrated'
+                valve.desired_liquid_amount
                 settings_struct.GUI.(open_time) = (GetValveTimes(valve.desired_liquid_amount,valve.label)) * 1000; 
             case 'default'
                 settings_struct.GUI.(open_time) = 30 * 1000; 
