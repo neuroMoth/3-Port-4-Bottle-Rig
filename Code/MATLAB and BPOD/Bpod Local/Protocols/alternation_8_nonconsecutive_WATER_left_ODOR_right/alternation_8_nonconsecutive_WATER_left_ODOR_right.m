@@ -152,7 +152,7 @@ function side_training_day_1_odor_right
         end
 
         if (expV.MINIMUM_TRIALS) % evaluate if minimum trial number is reached, and if 10 consecutive traials have been skipped
-            if(BpodSystem.Status.consecutiveRatSkips >= 10)
+            if(BpodSystem.Status.consecutiveRatSkips >= 20)
                 stop_experiment(A, W);
                 return
             end
@@ -226,7 +226,7 @@ function side_training_day_1_odor_right
 
         sma = AddState(sma, 'Name', 'ttcLateral', ...
             'Timer', expV.TTC_LATERAL_TIME,...
-            'StateChangeConditions', {'Tup', 'exit', correct_port.lick_event, 'waitLateralDryLicks', incorrect_port.lick_event,...
+            'StateChangeConditions', {'Tup', 'punish', correct_port.lick_event, 'waitLateralDryLicks', incorrect_port.lick_event,...
                 'waitLateralDryLicks' expV.experimentTimeExpired , 'cleanup'},...
             'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN, 'GlobalCounterReset', port_1.COUNTER_ID});
 
