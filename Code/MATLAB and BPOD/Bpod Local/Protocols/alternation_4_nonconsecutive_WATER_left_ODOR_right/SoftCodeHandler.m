@@ -19,7 +19,10 @@ function SoftCodeHandler(Byte)
             BpodSystem.Data.trialsEngaged(trial) = 1;
         case 15 
             BpodSystem.Data.CorrectTrials = BpodSystem.Data.CorrectTrials + 1;
-            fprintf('%d correct trials. ',BpodSystem.Data.CorrectTrials)
+            fprintf('%d correct. ',BpodSystem.Data.CorrectTrials)
+
+            trial = BpodSystem.Status.trial;
+            BpodSystem.Data.lateralPortChoice(trial) = BpodSystem.Data.correctPort(trial);
 
             if (mod(BpodSystem.Data.CorrectTrials, expV.CORRECT_REQUIRED_TO_SWITCH) == 0)
                 BpodSystem.Status.switchStimulusFlag = true;
