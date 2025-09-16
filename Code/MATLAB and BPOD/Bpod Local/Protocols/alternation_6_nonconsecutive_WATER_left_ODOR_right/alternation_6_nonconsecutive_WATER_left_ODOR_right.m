@@ -321,20 +321,20 @@ function side_training_day_1_odor_right
         BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler';
 
         SendStateMachine(sma);
-        events = RunStateMachine();
+        trial_events = RunStateMachine();
 
-            if ~isempty(fieldnames(events)) % If you didn't stop the session manually mid-trial
-                    BpodSystem.Data = AddTrialEvents(BpodSystem.Data,events); % Adds raw events to a human-readable data struct
-                        SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
-                    end
+        if ~isempty(fieldnames(trial_events)) % If you didn't stop the session manually mid-trial
+            BpodSystem.Data = AddTrialEvents(BpodSystem.Data, trial_events); % Adds raw events to a human-readable data struct
+            SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
+        end
 
-                    HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
+        HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
 
-                    if (BpodSystem.Status.ExitTrialLoop == 1 || BpodSystem.Status.BeingUsed == 0)
-                        stop_experiment(A, W);
-                        return
-                    end
+        if (BpodSystem.Status.ExitTrialLoop == 1 || BpodSystem.Status.BeingUsed == 0)
+            stop_experiment(A, W);
+            return
+        end
 
-                    fprintf('\n')
-                end
-            end
+        fprintf('\n')
+    end
+end
