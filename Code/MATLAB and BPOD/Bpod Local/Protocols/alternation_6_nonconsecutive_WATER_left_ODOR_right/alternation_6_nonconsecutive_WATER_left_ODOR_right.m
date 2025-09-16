@@ -91,7 +91,7 @@ function side_training_day_1_odor_right
     % do MAXIMUM_TRIALS as defined in ExperimentVariables file if 60 minutes has not elapsed.
     for trial= 1:expV.MAXIMUM_TRIALS
         BpodSystem.Status.trial  = trial;
-        trial
+        fprintf('Trial %d: ', trial)
 
         S = BpodParameterGUI('sync', S);
 
@@ -114,15 +114,15 @@ function side_training_day_1_odor_right
             CENTER_VALVES = [2, 5];
 
             first_stimulus_valve = CENTER_VALVES(randi(2));
-            first_stimulus_valve
 
             center_port = center_port.setValve(1, first_stimulus_valve);
+            fprintf('Center = valve %d. ',first_stimulus_valve)
 
             correct_port = correct_port.setCorrect(port_1, port_3, first_stimulus_valve);
             incorrect_port = incorrect_port.setIncorrect(port_1, port_3, first_stimulus_valve);
 
-            correct_port
-            incorrect_port
+            fprintf('Correct = port %d. ',correct_port.port)
+            fprintf('Incorrect = port %d. ',incorrect_port.port)
 
             sma = AddState(sma, 'Name', 'triggerExperimentTimer', ...
                 'Timer', 0,...
@@ -133,6 +133,7 @@ function side_training_day_1_odor_right
         if (BpodSystem.Status.switchStimulusFlag)
             % switch correct and incorrect
             center_port = center_port.switchLeftValve();
+            fprintf('Center = valve %d. ',center_port.left_valve)
 
             % select correct and incorrect port based on center_port.left_valve
             correct_port = correct_port.setCorrect(port_1, port_3, center_port.left_valve);
@@ -141,8 +142,8 @@ function side_training_day_1_odor_right
             % reset the flag
             BpodSystem.Status.switchStimulusFlag = false;
 
-            correct_port
-            incorrect_port
+            fprintf('Correct = port %d. ',correct_port.port)
+            fprintf('Incorrect = port %d. ',incorrect_port.port)
 
         end
 
@@ -152,7 +153,7 @@ function side_training_day_1_odor_right
         end
 
         if (expV.MINIMUM_TRIALS) % evaluate if minimum trial number is reached, and if 10 consecutive traials have been skipped
-            if(BpodSystem.Status.consecutiveRatSkips >= 10)
+            if(BpodSystem.Status.consecutiveRatSkips >= 20)
                 stop_experiment(A, W);
                 return
             end
@@ -224,9 +225,10 @@ function side_training_day_1_odor_right
             'StateChangeConditions', {'Tup', 'ttcLateral', expV.experimentTimeExpired , 'cleanup'},...
             'OutputActions',{center_port.DOOR, expV.UP, 'GlobalCounterReset', port_3.COUNTER_ID, 'SoftCode', 3});
 
+        % The ttcLateral used to just exit after Tup, now it should also punish - TVD 9/12/2025
         sma = AddState(sma, 'Name', 'ttcLateral', ...
             'Timer', expV.TTC_LATERAL_TIME,...
-            'StateChangeConditions', {'Tup', 'exit', correct_port.lick_event, 'waitLateralDryLicks', incorrect_port.lick_event,...
+            'StateChangeConditions', {'Tup', 'punish', correct_port.lick_event, 'waitLateralDryLicks', incorrect_port.lick_event,...
                 'waitLateralDryLicks' expV.experimentTimeExpired , 'cleanup'},...
             'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN, 'GlobalCounterReset', port_1.COUNTER_ID});
 
@@ -321,17 +323,18 @@ function side_training_day_1_odor_right
                         SendStateMachine(sma);
                         events = RunStateMachine();
 
-                            if ~isempty(fieldnames(events)) % If you didn't stop the session manually mid-trial
-                                    BpodSystem.Data = AddTrialEvents(BpodSystem.Data,events); % Adds raw events to a human-readable data struct
-                                        SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
-                                    end
+                        if ~isempty(fieldnames(events)) % If you didn't stop the session manually mid-trial
+                            BpodSystem.Data = AddTrialEvents(BpodSystem.Data,events); % Adds raw events to a human-readable data struct
+                            SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
+                        end
 
-                                    HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
+                        HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
 
-                                    if (BpodSystem.Status.ExitTrialLoop == 1 || BpodSystem.Status.BeingUsed == 0)
-                                        stop_experiment(A, W);
-                                        return
-                                    end
+                        if (BpodSystem.Status.ExitTrialLoop == 1 || BpodSystem.Status.BeingUsed == 0)
+                            stop_experiment(A, W);
+                            return
+                        end
 
-                                end
-                            end
+            fprintf('\n')
+    end
+end

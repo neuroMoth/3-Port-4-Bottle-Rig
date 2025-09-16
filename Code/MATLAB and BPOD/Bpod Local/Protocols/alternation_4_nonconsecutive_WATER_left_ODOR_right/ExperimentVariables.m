@@ -1,6 +1,7 @@
 classdef ExperimentVariables 
     properties (Constant)
-        TOTAL_ALLOWED_TIME = 3600; %seconds / 60 minutes.
+        %TOTAL_ALLOWED_TIME = 3600; %seconds / 60 minutes.
+        TOTAL_ALLOWED_TIME = 5400; %seconds / 90 minutes. Edited by TD 9-13-25
         ITI_TIME = 5; %seconds 
         PUNISHMENT_TIME = 10; %seconds
         TTC_CENTER_TIME = 15; %seconds
