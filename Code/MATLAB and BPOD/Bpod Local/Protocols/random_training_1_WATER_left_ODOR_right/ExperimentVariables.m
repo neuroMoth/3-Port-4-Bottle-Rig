@@ -1,6 +1,7 @@
 classdef ExperimentVariables 
     properties (Constant)
-        TOTAL_ALLOWED_TIME = 3600; %seconds / 60 minutes.
+        %TOTAL_ALLOWED_TIME = 3600; %seconds / 60 minutes.
+        TOTAL_ALLOWED_TIME = 5400; %seconds / 90 minutes. Edited by TD 9-15-25
         ITI_TIME = 5; %seconds 
         PUNISHMENT_TIME = 10; %seconds
         TTC_CENTER_TIME = 10; %seconds
@@ -14,7 +15,7 @@ classdef ExperimentVariables
         MINIMUM_TRIALS = 100;
         TRIALS_PER_BLOCK = 20;
 
-        SKIPPED_TRIALS_THRESHOLD = 10; % threshold of consecutive trials skipped in a 20 trial block to end early
+        SKIPPED_TRIALS_THRESHOLD = 20; % threshold of consecutive trials skipped in a 20 trial block to end early
         CORRECT_REQUIRED_TO_SWITCH = 2;
 
         % these varaibles are used to make door commands more intuitive and easy to understand & read.

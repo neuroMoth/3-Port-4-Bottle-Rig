@@ -10,7 +10,7 @@ function SoftCodeHandler(Byte)
         case 2
             % trial was not engaged, increment consecutiveRatSkips
             BpodSystem.Status.consecutiveRatSkips = BpodSystem.Status.consecutiveRatSkips + 1; 
-            BpodSystem.Status.consecutiveRatSkips 
+            if BpodSystem.Status.consecutiveRatSkips >1; fprintf('-> %d consecutive skips. ',BpodSystem.Status.consecutiveRatSkips); end
             
             BpodSystem.Data.trialsEngaged(BpodSystem.Status.trial) = 0;
         case 3 
@@ -21,6 +21,7 @@ function SoftCodeHandler(Byte)
             BpodSystem.Data.trialsEngaged(trial) = 1;
         case 15 
             BpodSystem.Data.CorrectTrials = BpodSystem.Data.CorrectTrials + 1;
+            fprintf('-> %d correct. ',BpodSystem.Data.CorrectTrials)
 
             if (mod(BpodSystem.Data.CorrectTrials, expV.CORRECT_REQUIRED_TO_SWITCH) == 0)
                 BpodSystem.Status.switchStimulusFlag = true;
