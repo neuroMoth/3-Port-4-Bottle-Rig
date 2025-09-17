@@ -1,8 +1,6 @@
-## Cage Alignment Components
+## Cage Support Leg Components
 
-This directory contains the models used to align and lock the cage in position along the edges of the cage. 
-
-The small components are used at the front of the cage nearest to the delivery components, while the large are used everywhere else.
+This directory contains the models used to secure the cage walls together, as well as provide top and pee tray alignment. 
 
 To print all the components you will need for one box:
 

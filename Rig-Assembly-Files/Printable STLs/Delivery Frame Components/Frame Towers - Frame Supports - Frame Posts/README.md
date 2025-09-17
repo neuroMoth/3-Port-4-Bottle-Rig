@@ -1,12 +1,10 @@
-## Cage Alignment Components
+## Frame Support / Frame Z-Posts to Breadboard mounts
 
-This directory contains the models used to align and lock the cage in position along the edges of the cage. 
-
-The small components are used at the front of the cage nearest to the delivery components, while the large are used everywhere else.
+This directory contains the printable models used to secure the delivery frame to the breadboard. 
 
 To print all the components you will need for one box:
 
-- open the .3mf file named 'ALL Cage Legs' in PrusaSlicer.
+- open the .3mf file named 'ALL Frame Z-Posts' in PrusaSlicer.
 - all settings will be set as needed, no need to modify unless these parts are found to be too weak. If so, infill percentage can be increased.  
 - click 'Slice Now' in the bottom right of the PrusaSlicer window.
 - remove the usb from the front of the Prusa Core One 3D printer. 
