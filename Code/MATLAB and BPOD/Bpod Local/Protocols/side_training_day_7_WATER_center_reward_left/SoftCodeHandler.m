@@ -10,6 +10,8 @@ function SoftCodeHandler(Byte)
         case 2
             % trial was not engaged, increment consecutiveRatSkips
             BpodSystem.Status.consecutiveRatSkips = BpodSystem.Status.consecutiveRatSkips + 1; 
+
+            fprintf('-> punish. ')
             if BpodSystem.Status.consecutiveRatSkips > 1; fprintf('-> %d consecutive skips. ',BpodSystem.Status.consecutiveRatSkips); end
         case 3 
             trial = BpodSystem.Status.trial;

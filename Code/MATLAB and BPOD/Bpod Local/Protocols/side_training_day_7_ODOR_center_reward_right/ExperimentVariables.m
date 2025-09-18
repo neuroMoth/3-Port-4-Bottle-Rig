@@ -2,7 +2,7 @@ classdef ExperimentVariables
     properties (Constant)
         TOTAL_ALLOWED_TIME = 3600; %seconds / 60 minutes.
         ITI_TIME = 5; %seconds 
-        PUNISHMENT_TIME = 0; %seconds
+        PUNISHMENT_TIME = 10; %seconds
         TTC_CENTER_TIME = 15; %seconds
         TTC_LATERAL_TIME = 15; %seconds
         LICK_WINDOW = 2; %seconds | Defines amount of seconds rat has to complete required amount of licks.
