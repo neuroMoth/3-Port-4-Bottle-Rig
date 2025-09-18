@@ -2,7 +2,8 @@ function center_lineup = GenerateCenterLineup()
     % --- Define parameters ---
     total_trials = 200;
     block_size = 20;
-    valves = 2:7;
+    %valves = 2:7;
+    valves = [2, 5]; % Only using center valves 2 and 5 for preliminary data
 
     num_blocks = total_trials / block_size; % = 10
     num_valves = length(valves); % = 6
