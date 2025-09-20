@@ -1,6 +1,6 @@
 %% Code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
 % ASSOCIATION | WATER LEFT (Port 1)| ODOR RIGHT (Port 3)
-function side_training_day_1_odor_right
+function alternation_4_nonconsecutive_WATER_left_ODOR_right
     global BpodSystem
 
     W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1);
@@ -93,7 +93,7 @@ function side_training_day_1_odor_right
     % do MAXIMUM_TRIALS as defined in ExperimentVariables file if 60 minutes has not elapsed.
     for trial= 1:expV.MAXIMUM_TRIALS
         BpodSystem.Status.trial  = trial;
-        fprintf('Trial %d: ', trial)
+        fprintf('Trial%d: ', trial)
 
         S = BpodParameterGUI('sync', S);
 
@@ -116,15 +116,15 @@ function side_training_day_1_odor_right
             CENTER_VALVES = [2, 5];
 
             first_stimulus_valve = CENTER_VALVES(randi(2));
-            fprintf('Center = valve %d. ',first_stimulus_valve)
+            fprintf('Center=valve%d. ',first_stimulus_valve)
 
             center_port = center_port.setValve(1, first_stimulus_valve);
 
             correct_port = correct_port.setCorrect(port_1, port_3, first_stimulus_valve);
             incorrect_port = incorrect_port.setIncorrect(port_1, port_3, first_stimulus_valve);
 
-            fprintf('Correct = port %d. ',correct_port.port)
-            fprintf('Incorrect = port %d. ',incorrect_port.port)
+            fprintf('Correct=port%d. ',correct_port.port)
+            fprintf('Incorrect=port%d. ',incorrect_port.port)
 
             sma = AddState(sma, 'Name', 'triggerExperimentTimer', ...
                 'Timer', 0,...
@@ -135,7 +135,7 @@ function side_training_day_1_odor_right
         if (BpodSystem.Status.switchStimulusFlag)
             % switch correct and incorrect
             center_port = center_port.switchLeftValve();
-            fprintf('Center = valve %d. ',center_port.left_valve)
+            fprintf('Center=valve%d. ',center_port.left_valve)
 
             % select correct and incorrect port based on center_port.left_valve
             correct_port = correct_port.setCorrect(port_1, port_3, center_port.left_valve);
@@ -144,8 +144,8 @@ function side_training_day_1_odor_right
             % reset the flag
             BpodSystem.Status.switchStimulusFlag = false;
 
-            fprintf('Correct = port %d. ',correct_port.port)
-            fprintf('Incorrect = port %d. ',incorrect_port.port)
+            fprintf('Correct=port%d. ',correct_port.port)
+            fprintf('Incorrect=port%d. ',incorrect_port.port)
 
         end
 
@@ -155,7 +155,7 @@ function side_training_day_1_odor_right
         end
 
         if (expV.MINIMUM_TRIALS) % evaluate if minimum trial number is reached, and if 10 consecutive traials have been skipped
-            if(BpodSystem.Status.consecutiveRatSkips >= 20)
+            if(BpodSystem.Status.consecutiveRatSkips >= expV.SKIPPED_TRIALS_THRESHOLD)
                 stop_experiment(A, W);
                 return
             end
@@ -209,15 +209,37 @@ function side_training_day_1_odor_right
             'StateChangeConditions', {'Tup', 'centerValveOff2', expV.experimentTimeExpired , 'cleanup'},...
             'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.left_valve], 'BNC1', 1});
 
+        % sma = AddState(sma, 'Name', 'centerValveOff2', ...
+        %     'Timer', 0,...
+        %     'StateChangeConditions', {'Tup', 'waitSixthLick', expV.experimentTimeExpired , 'cleanup'},...
+        %     'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.left_valve], 'BNC1', 0});
+
+        % sma = AddState(sma, 'Name', 'waitSixthLick', ...
+        %     'Timer', 0,...
+        %     'StateChangeConditions', {center_port.LEFT_LICK_INPUT, 'ttcLateralTimeout', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired , 'punish'},...
+        %     'OutputActions',{center_port.DOOR, expV.DOWN});
+
+        % Adding a sixth reward lick to make sure they get enough to sample - TVD 9/19/2025
+
         sma = AddState(sma, 'Name', 'centerValveOff2', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'waitSixthLick', expV.experimentTimeExpired , 'cleanup'},...
+            'StateChangeConditions', {'Tup', 'waitCenterRewardLick3', expV.experimentTimeExpired , 'cleanup'},...
             'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.left_valve], 'BNC1', 0});
 
-        sma = AddState(sma, 'Name', 'waitSixthLick', ...
+        sma = AddState(sma, 'Name', 'waitCenterRewardLick3', ...
             'Timer', 0,...
-            'StateChangeConditions', {center_port.LEFT_LICK_INPUT, 'ttcLateralTimeout', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired , 'punish'},...
+            'StateChangeConditions', {center_port.LEFT_LICK_INPUT, 'openCenterValve3', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired , 'punish' },...
             'OutputActions',{center_port.DOOR, expV.DOWN});
+
+        sma = AddState(sma, 'Name', 'openCenterValve3', ...
+            'Timer', center_port.left_valve_time,...
+            'StateChangeConditions', {'Tup', 'centerValveOff3'},...
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.left_valve], 'BNC1', 1});
+
+        sma = AddState(sma, 'Name', 'centerValveOff3', ...
+            'Timer', 0,...
+            'StateChangeConditions', {'Tup', 'ttcLateralTimeout'},...
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.left_valve], 'BNC1', 0});
 
 
         %%%%% BEGIN TTC ON THE LATERAL PORTS %%%%%
