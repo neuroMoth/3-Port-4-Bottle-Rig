@@ -356,6 +356,7 @@ function alternation_4_nonconsecutive_WATER_left_ODOR_right
             stop_experiment(A, W);
             return
         end
+        
         fprintf('\n')
     end
 end
