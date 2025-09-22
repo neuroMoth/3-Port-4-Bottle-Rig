@@ -4,10 +4,8 @@ classdef ExperimentVariables
         TOTAL_ALLOWED_TIME = 5400; %seconds / 90 minutes. Edited by TD 9-12-25
         ITI_TIME = 15; %seconds 
         PUNISHMENT_TIME = 0; %seconds
-        % TTC_CENTER_TIME = 15; %seconds
-        % TTC_LATERAL_TIME = 15; %seconds
-        TTC_CENTER_TIME = 10; %seconds - edited by TD for later round of alternation 9-22-25
-        TTC_LATERAL_TIME = 10; %seconds - edited by TD for later round of alternation 9-22-25
+        TTC_CENTER_TIME = 15; %seconds
+        TTC_LATERAL_TIME = 15; %seconds
         LICK_WINDOW = 2; %seconds | Defines amount of seconds rat has to complete required amount of licks.
 
         EXPERIMENT_TIMER_ID = 1;
