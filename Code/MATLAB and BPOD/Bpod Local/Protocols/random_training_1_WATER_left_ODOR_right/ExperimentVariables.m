@@ -2,7 +2,7 @@ classdef ExperimentVariables
     properties (Constant)
         %TOTAL_ALLOWED_TIME = 3600; %seconds / 60 minutes.
         TOTAL_ALLOWED_TIME = 5400; %seconds / 90 minutes. Edited by TD 9-15-25
-        ITI_TIME = 5; %seconds 
+        ITI_TIME = 15; %seconds 
         PUNISHMENT_TIME = 10; %seconds
         TTC_CENTER_TIME = 10; %seconds
         TTC_LATERAL_TIME = 10; %seconds
@@ -11,7 +11,7 @@ classdef ExperimentVariables
         EXPERIMENT_TIMER_ID = 1;
         LICK_WINDOW_TIMER_ID = 2;
         
-        MAXIMUM_TRIALS = 200;
+        MAXIMUM_TRIALS = 160;
         MINIMUM_TRIALS = 100;
         TRIALS_PER_BLOCK = 20;
 

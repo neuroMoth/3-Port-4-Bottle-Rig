@@ -9,11 +9,11 @@ function SoftCodeHandler(Byte)
             BpodSystem.Status.BeingUsed = 0;
         case 2
             % trial was not engaged, increment consecutiveRatSkips
-            BpodSystem.Status.consecutiveRatSkips = BpodSystem.Status.consecutiveRatSkips + 1; 
-            if BpodSystem.Status.consecutiveRatSkips >1; fprintf('-> %d consecutive skips. ',BpodSystem.Status.consecutiveRatSkips); end
+            BpodSystem.Status.consecutiveRatSkips = BpodSystem.Status.consecutiveRatSkips + 1;
             
-            BpodSystem.Data.trialsEngaged(BpodSystem.Status.trial) = 0;
-        case 3 
+            fprintf('-> Punish. %d sec. ',expV.PUNISHMENT_TIME)
+            if BpodSystem.Status.consecutiveRatSkips > 1; fprintf('%d consecutive skips. ',BpodSystem.Status.consecutiveRatSkips); end
+        case 3
             trial = BpodSystem.Status.trial;
             % trial *was* engaged, reset consecutiveRatSkips
             BpodSystem.Status.consecutiveRatSkips = 0; 
