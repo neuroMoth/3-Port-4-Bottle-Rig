@@ -95,8 +95,8 @@ function sessionSummary(animal, date)
     % Print to command window
     fprintf('Date: %s   Start time: %s\n',sessionDate,sessionTime)
     fprintf('Session duration %d minutes and %d seconds long.\n', sessionMinutes, sessionSeconds);
-    fprintf('# Engaged: %d/%d. # Not engaged: %d/%d.\n', ...
+    fprintf('# Engaged Trials: %d/%d. # Not engaged: %d/%d.\n', ...
         nEngagedTr,nTotalTr,nTotalTr-nEngagedTr,nTotalTr);
-    fprintf('# Correct (out of engaged): %d/%d or %.2f%%.\n',nCorrectTr,nEngagedTr,(100*round(nCorrectTr/nEngagedTr,4)));
-    fprintf('---------------------------------------------\n') 
+    fprintf('# Correct Trials (out of engaged): %d/%d.\n',nCorrectTr,nEngagedTr);
+    %fprintf('# Incorrect Trials: %d/%d\n',,nTotalTr); 
 end 
