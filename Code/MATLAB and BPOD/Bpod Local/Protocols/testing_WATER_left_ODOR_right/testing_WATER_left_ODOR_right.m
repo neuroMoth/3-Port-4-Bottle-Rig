@@ -1,6 +1,6 @@
 %% Code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
 % ASSOCIATION | WATER LEFT (Port 1)| ODOR RIGHT (Port 3)
-function random_training_2_WATER_left_ODOR_right
+function testing_WATER_left_ODOR_right
     global BpodSystem
 
     W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1);
