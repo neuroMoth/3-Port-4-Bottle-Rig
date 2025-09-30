@@ -6,7 +6,6 @@ classdef ExperimentVariables
         TTC_CENTER_TIME = 5; %seconds
         TTC_LATERAL_TIME = 5; %seconds
         LICK_WINDOW = 2; %seconds | Defines amount of seconds rat has to complete required amount of licks.
-        DELAY_TIME = 3; %seconds | delay from closing the center door to opening the 
 
         EXPERIMENT_TIMER_ID = 1;
         LICK_WINDOW_TIMER_ID = 2;
