@@ -27,13 +27,11 @@ function random_training_2_WATER_left_ODOR_right
 
     % global variable that will be accessed when SoftCode15 is sent indicating a correct trial selection
     BpodSystem.Data.CorrectTrials = 0;
-
+    BpodSystem.Data.experimentVariables = expV; 
+    BpodSystem.Data.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
-
     BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
-
     BpodSystem.Data.trialsEngaged = zeros(expV.MAXIMUM_TRIALS, 1);
-    
     BpodSystem.Status.trial = 1;
 
     center_port_valve_lineup = GenerateCenterLineup();

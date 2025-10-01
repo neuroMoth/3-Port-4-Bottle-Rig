@@ -89,7 +89,7 @@ function sessionSummary(animal, date)
     sessionMinutes=round(SessionData.TrialEndTimestamp(end)/60); 
     sessionSeconds=round(rem(SessionData.TrialEndTimestamp(end),60));
     nTotalTr=length(SessionData.TrialStartTimestamp);
-    nCorrectTr=SessionData.CorrectTrials;
+    nCorrectTr=sum(SessionData.correctTrials==1);
     nEngagedTr=sum(SessionData.trialsEngaged); 
 
     % Print to command window
