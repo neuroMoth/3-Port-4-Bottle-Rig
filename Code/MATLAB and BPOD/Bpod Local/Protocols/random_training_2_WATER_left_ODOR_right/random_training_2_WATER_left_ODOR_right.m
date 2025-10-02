@@ -144,6 +144,8 @@ function random_training_2_WATER_left_ODOR_right
         BpodSystem.Data.centerValve(trial) = center_port.left_valve;
         BpodSystem.Data.correctPort(trial) = correct_port.port;
 
+        %fprintf(['Center:',num2str(center_port.left_valve_time),'Lateral',num2str(correct_port.valve_time),' ']); 
+
 
         sma = AddState(sma, 'Name', 'ITI', ...
             'Timer', expV.ITI_TIME,...

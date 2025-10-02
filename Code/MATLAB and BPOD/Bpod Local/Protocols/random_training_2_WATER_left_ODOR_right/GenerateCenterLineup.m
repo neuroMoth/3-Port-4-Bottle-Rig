@@ -1,7 +1,8 @@
 function center_lineup = GenerateCenterLineup()
     % --- Define parameters ---
-    total_trials = 200;
-    block_size = 20;
+    expV = ExperimentVariables;
+    total_trials = expV.MAXIMUM_TRIALS;
+    block_size = expV.TRIALS_PER_BLOCK;
     valves = [2, 5]; % Only 2 and 5 for preliminary data collection
 
     num_blocks = total_trials / block_size; % = 10
