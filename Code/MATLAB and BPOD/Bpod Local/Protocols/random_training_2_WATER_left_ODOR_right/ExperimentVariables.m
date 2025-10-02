@@ -1,12 +1,12 @@
 classdef ExperimentVariables 
     properties (Constant)
-        TOTAL_ALLOWED_TIME = 4000; %seconds / 60 minutes.
+        TOTAL_ALLOWED_TIME = 4000; %seconds 
         ITI_TIME = 15; %seconds 
         PUNISHMENT_TIME = 10; %seconds
         TTC_CENTER_TIME = 5; %seconds
         TTC_LATERAL_TIME = 5; %seconds
         LICK_WINDOW = 2; %seconds | Defines amount of seconds rat has to complete required amount of licks.
-        BLANK_OPEN_TIME = 30/1000; %seconds divided by 1000 to convert to ms - will add variance 
+        BLANK_OPEN_TIME = 35/1000; %seconds divided by 1000 to convert to ms - will add variance with random jitter 
 
         EXPERIMENT_TIMER_ID = 1;
         LICK_WINDOW_TIMER_ID = 2;

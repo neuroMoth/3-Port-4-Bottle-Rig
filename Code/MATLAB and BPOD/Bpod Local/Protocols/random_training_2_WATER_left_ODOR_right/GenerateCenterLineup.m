@@ -1,4 +1,7 @@
 function center_lineup = GenerateCenterLineup()
+    % --- Initialize random number generator --- 
+    rng(0,'twister');
+
     % --- Define parameters ---
     expV = ExperimentVariables;
     total_trials = expV.MAXIMUM_TRIALS;
