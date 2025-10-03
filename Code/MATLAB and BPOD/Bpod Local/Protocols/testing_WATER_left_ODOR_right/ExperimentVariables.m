@@ -17,7 +17,7 @@ classdef ExperimentVariables
         TRIALS_PER_BLOCK = 20;
 
         SKIPPED_TRIALS_THRESHOLD = 20; % threshold of consecutive trials skipped in a 20 trial block to end early
-        CORRECT_REQUIRED_TO_SWITCH = 2;
+        %CORRECT_REQUIRED_TO_SWITCH = 2;
 
         % these varaibles are used to make door commands more intuitive and easy to understand & read.
         UP = 0;
