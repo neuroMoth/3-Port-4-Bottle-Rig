@@ -1,7 +1,9 @@
 function center_lineup = GenerateCenterLineup()
-    expV = ExperimentVariables;
+    % --- Initialize random number generator --- 
+    rng(0,'twister');
 
     % --- Define parameters ---
+    expV = ExperimentVariables;
     total_trials = expV.MAXIMUM_TRIALS;
     block_size = expV.TRIALS_PER_BLOCK;
     valves = [2, 5]; % Only 2 and 5 for preliminary data collection
