@@ -19,26 +19,33 @@ function random_training_2_WATER_left_ODOR_right
     W.loadWaveform(1, y);         % Loads a sound as waveform 1
 
     %expV is used to access experiment constants
-    expV = ExperimentVariables;
+    expV = ExperimentVariables();
 
     % this variable is created to indicate when the protocol should halt (after 60 minutes). This is set
     % in the softcode handler function 'BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler_exit'
     BpodSystem.Status.ExitTrialLoop = false;
 
     % Organizing what to save to data structure
-    BpodSystem.Data.experimentVariables = expV; 
     BpodSystem.Data.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.trialsEngaged = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Status.trial = 1;
 
+    % Saving ExperimentVariables
+    propNames = properties(expV); propValues = cell(size(propNames));
+    for i = 1:numel(propNames) % Loop through and get each property value
+        propValues{i} = expV.(propNames{i});
+    end
+    expVarTable = cell2table(propValues,'RowNames', propNames, 'VariableNames', {'Value'}); % Convert to table
+    BpodSystem.Data.experimentVariables = expVarTable; % Save table to structure
+
     center_port_valve_lineup = GenerateCenterLineup();
 
     blankJitter = generateBlankValveJitter(); % generates jitter for every trial and valve opening at the start
     blankOpenTimes = expV.BLANK_OPEN_TIME + blankJitter;
-    BpodSystem.Data.blankOpenTimes = blankOpenTimes; 
-    
+    BpodSystem.Data.blankOpenTimes = blankOpenTimes;
+
     %BpodSystem.Data.center_valve_lineup = center_port_valve_lineup;
 
     % used to indicate when middle stimulus should switch. this behavior is defined in  SoftCodeHandler.m
