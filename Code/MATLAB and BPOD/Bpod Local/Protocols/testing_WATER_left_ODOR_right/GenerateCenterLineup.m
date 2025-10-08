@@ -6,7 +6,7 @@ function center_lineup = GenerateCenterLineup()
     expV = ExperimentVariables;
     total_trials = expV.MAXIMUM_TRIALS;
     block_size = expV.TRIALS_PER_BLOCK;
-    valves = [2, 5]; % Only 2 and 5 for preliminary data collection
+    valves = [2,3,4,5,6,7]; % Now with all valves
 
     num_blocks = total_trials / block_size; % = 10
     num_valves = length(valves); % = 6

@@ -87,9 +87,11 @@ function testing_WATER_left_ODOR_right
         BpodSystem.ProtocolSettings = S;
     end
 
-    valveID = ["Valve1"; "Valve2"; "Valve5"; "Valve8"];
+    valveID = ["Valve1"; "Valve2"; "Valve3"; "Valve4"; "Valve5"; "Valve6"; "Valve7";  "Valve8"];
     valveOpenTimes = [BpodSystem.ProtocolSettings.GUI.open_time_1; BpodSystem.ProtocolSettings.GUI.open_time_2; ...
-        BpodSystem.ProtocolSettings.GUI.open_time_5; BpodSystem.ProtocolSettings.GUI.open_time_8];
+        BpodSystem.ProtocolSettings.GUI.open_time_3; BpodSystem.ProtocolSettings.GUI.open_time_4; ...
+        BpodSystem.ProtocolSettings.GUI.open_time_5; BpodSystem.ProtocolSettings.GUI.open_time_6; 
+        BpodSystem.ProtocolSettings.GUI.open_time_7; BpodSystem.ProtocolSettings.GUI.open_time_8];
     BpodSystem.Data.valveOpenTimes = table(valveID,valveOpenTimes);
 
     % port_1 is the instance of the class Port1
@@ -104,6 +106,13 @@ function testing_WATER_left_ODOR_right
 
     BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
+    %% Print to document the start of the Session
+    fprintf('Date and time: %s\n',datetime("now"))
+    fprintf('Valve Durations: '); 
+    for iValves=1:length(valveID); fprintf('%s=%.1fms. ',num2str(iValves),valveOpenTimes(iValves)); end
+    fprintf('\n')
+
+    %% Looping through trials
     % do MAXIMUM_TRIALS as defined in ExperimentVariables file if 60 minutes has not elapsed.
     for trial= 1:expV.MAXIMUM_TRIALS
         BpodSystem.Status.trial  = trial;

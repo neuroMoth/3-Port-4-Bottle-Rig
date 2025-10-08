@@ -18,8 +18,8 @@
             LEFT_COUNTER_EVENT = 'GlobalCounter1_End';
             RIGHT_COUNTER_EVENT = 'GlobalCounter2_End';
 
-            WATER_VALVE = 2;
-            ODOR_VALVE = 5;
+            % WATER_VALVE = 2;
+            % ODOR_VALVE = 5;
         end 
         methods
             function obj = setValve(obj, side, valve_number)
@@ -37,13 +37,14 @@
                 else
                 end
             end
-            function obj = switchLeftValve(obj)
-                switch (obj.left_valve)
-                    case 2
-                        obj.left_valve = 5;
-                    case 5 
-                        obj.left_valve = 2;
-                end
-            end
+            % NOT FUNCTIONAL FOR TEST OR RANDOM TRAINING
+            % function obj = switchLeftValve(obj)
+            %     switch (obj.left_valve)
+            %         case 2
+            %             obj.left_valve = 5;
+            %         case 5 
+            %             obj.left_valve = 2;
+            %     end
+            % end
         end
     end
