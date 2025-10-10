@@ -29,14 +29,14 @@ function settings_struct = set_valve_open_values(settings_struct, valves, type_d
 
         switch(type_durations)
             case 'calibrated'
-                valve.desired_liquid_amount
+                %valve.desired_liquid_amount;
                 settings_struct.GUI.(open_time) = (GetValveTimes(valve.desired_liquid_amount,valve.label)) * 1000; 
             case 'default'
                 settings_struct.GUI.(open_time) = 30 * 1000; 
             case 'user'
                 settings_struct.GUI.(open_time) = BpodSystem.ProtocolSettings.GUI.(open_time);
             otherwise
-                val = str2double(type_durations)
+                val = str2double(type_durations);
                 if ~isnan(val)
                     settings_struct.GUI.(open_time) = val; 
                 else

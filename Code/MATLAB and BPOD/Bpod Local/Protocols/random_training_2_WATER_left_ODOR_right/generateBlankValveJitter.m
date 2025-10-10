@@ -1,6 +1,6 @@
 function blankValveJitter = generateBlankValveJitter()
     % --- Initialize random number generator --- 
-    rng(0,'twister');
+    rng("shuffle");
 
     % --- Define parameters ---
     expV = ExperimentVariables;

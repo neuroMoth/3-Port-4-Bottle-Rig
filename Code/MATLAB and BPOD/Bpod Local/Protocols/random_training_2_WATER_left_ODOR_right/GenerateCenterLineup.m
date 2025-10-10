@@ -1,6 +1,6 @@
 function center_lineup = GenerateCenterLineup()
     % --- Initialize random number generator --- 
-    rng(0,'twister');
+    rng("shuffle");
 
     % --- Define parameters ---
     expV = ExperimentVariables;
