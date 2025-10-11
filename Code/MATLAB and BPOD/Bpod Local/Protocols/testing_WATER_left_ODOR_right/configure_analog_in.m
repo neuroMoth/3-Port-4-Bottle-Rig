@@ -18,6 +18,8 @@ function A = configure_analog_in
     % Tell the AnalogInput1 module to start reporting events to the
     % state machine
     A.startReportingEvents();
+    % View all channels by default - added by TVD 10/11/2025
+    A.Stream2USB(1:4)=1;
     % start the oscilliscope.
     A.scope();
     A.scope_StartStop;
