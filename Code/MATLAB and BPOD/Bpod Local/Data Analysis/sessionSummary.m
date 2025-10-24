@@ -91,12 +91,14 @@ function sessionSummary(animal, date)
     nTotalTr=length(SessionData.TrialStartTimestamp);
     nCorrectTr=sum(SessionData.correctTrials==1);
     nEngagedTr=sum(SessionData.trialsEngaged); 
+    consEstimate = (nEngagedTr+nCorrectTr)*30/1000; 
 
     % Print to command window
-    fprintf('Date: %s   Start time: %s\n',sessionDate,sessionTime)
-    fprintf('Session duration %d minutes and %d seconds long.\n', sessionMinutes, sessionSeconds);
+    fprintf('Date: %s   Start time: %s   ',sessionDate,sessionTime)
+    fprintf('Duration: %dm %ds\n', sessionMinutes, sessionSeconds);
     fprintf('# Engaged: %d/%d. # Not engaged: %d/%d.\n', ...
         nEngagedTr,nTotalTr,nTotalTr-nEngagedTr,nTotalTr);
-    fprintf('# Correct (out of engaged): %d/%d or %.2f%%.\n',nCorrectTr,nEngagedTr,(100*round(nCorrectTr/nEngagedTr,4)));
-    fprintf('---------------------------------------------\n') 
+    fprintf('# Correct/Engaged: %d/%d or %.2f%%.\n',nCorrectTr,nEngagedTr,(100*round(nCorrectTr/nEngagedTr,4)));
+    fprintf('Estimated amount consumed: %.1fml.\n',consEstimate); 
+    fprintf('---------------------------------------------\n'); 
 end 
