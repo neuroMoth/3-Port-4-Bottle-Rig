@@ -6,7 +6,7 @@ function [center_lineup,rewardLickSelect, rewardDelays] = GenerateCenterLineup()
     expV = ExperimentVariables;
     total_trials = expV.MAXIMUM_TRIALS;
     block_size = expV.TRIALS_PER_BLOCK;
-    valveSet1 = [2,3,4]; valveSet2 = [5,6,7]; 
+    valveSet1 = [2,4]; valveSet2 = [5,7]; 
     valves = [valveSet1,valveSet2]; % Now with all valves
     rewardLickRange = [4 5 6]; % Range of possible reward licks
     rewardDelayRange = [0 30 60]/1000; % delay from lick detection to valve opening

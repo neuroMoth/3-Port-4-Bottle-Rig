@@ -30,6 +30,7 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
     BpodSystem.Data.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
+    BpodSystem.Data.firstRewardLick = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.trialsEngaged = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Status.trial = 1;
 
@@ -171,6 +172,7 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
 
         BpodSystem.Data.centerValve(trial) = center_port.left_valve;
         BpodSystem.Data.correctPort(trial) = correct_port.port;
+        BpodSystem.Data.firstRewardLick(trial) = num_dryLicks;
 
         %% Adding States
 
@@ -270,13 +272,13 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
         sma = AddState(sma, 'Name', 'ttcLateralTimeout', ...
             'Timer', expV.DELAY_TIME,...
             'StateChangeConditions', {'Tup', 'ttcLateral', expV.experimentTimeExpired , 'cleanup'},...
-            'OutputActions',{center_port.DOOR, expV.UP, 'GlobalCounterReset', port_3.COUNTER_ID, 'GlobalCounterReset', port_1.COUNTER_ID,'SoftCode', 3});
+            'OutputActions',{center_port.DOOR, expV.UP, 'GlobalCounterReset', port_3.COUNTER_ID,'SoftCode', 3});
 
         sma = AddState(sma, 'Name', 'ttcLateral', ...
             'Timer', expV.TTC_LATERAL_TIME,...
             'StateChangeConditions', {'Tup', 'reportSkip', correct_port.lick_event, 'waitLateralDryLicks', incorrect_port.lick_event,...
             'waitLateralDryLicks' expV.experimentTimeExpired , 'cleanup'},...
-            'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN});
+            'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN, 'GlobalCounterReset', port_1.COUNTER_ID});
 
         sma = AddState(sma, 'Name', 'waitLateralDryLicks', ...
             'Timer', 0,...
