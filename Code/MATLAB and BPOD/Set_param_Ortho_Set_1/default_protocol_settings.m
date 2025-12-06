@@ -13,7 +13,7 @@ function protocol_settings = default_protocol_settings(protocol_settings)
     end
 
     valve_labels = {'1','2','3','4','5', '6', '7', '8'};
-    liquid_amount_options = {'1','1.5','2','2.5','3','3.5','4','4.5','5','5.5','6','6.5','7','7.5','8','8.5'};
+    liquid_amount_options = {'5','10','15','20','25','30'};
 
     default_liquid_index = find(cellfun(@(x) strcmp(x,'5'), liquid_amount_options));
 
@@ -25,7 +25,7 @@ function protocol_settings = default_protocol_settings(protocol_settings)
     protocol_settings = create_popup_menu(protocol_settings, "calibration_or_clean", 1, calibration_or_manual_values);
 
     % create variables threshold_licks and num_trials and make them user editable fields
-    protocol_settings.GUI.threshold_licks = 7;
+    protocol_settings.GUI.threshold_licks = 3;
     protocol_settings.GUIMeta.threshold_licks.Style = 'edit'; 
 
     protocol_settings.GUI.num_trials = 210;
@@ -69,13 +69,11 @@ function protocol_settings = default_protocol_settings(protocol_settings)
 
     %% Control the 7 odor lines - Line 12 must be empty
 
-
     %%% BEGIN PANEL %%% 
     stimulus_options = {'empty', 'stimulus_1', 'stimulus_2', 'stimulus_3', 'stimulus_4', 'stimulus_5',...
         'stimulus_6', 'stimulus_7', 'stimulus_8', 'stimulus_9', 'stimulus_10', 'stimulus_11', 'stimulus_12',...
         'stimulus_13', 'stimulus_14', 'stimulus_15', 'stimulus_16', 'stimulus_17', 'stimulus_18', 'stimulus_19',...
         'stimulus_20', 'stimulus_21'};
-
 
 protocol_settings.GUIPanels.Current_valve_assignments = {};
 for i = 1:Set_param_constants.NUM_VALVES
@@ -92,7 +90,6 @@ end
 odor_set_options = {'first set of 7 odors','second set of 7 odors','third set of 7 odors'};
 protocol_settings = create_popup_menu(protocol_settings, 'odor_set', 3, odor_set_options);
 %% unsure of what this does at this time
-
 
 %% Setup for text panel displaying odor selections 
 protocol_settings.GUIPanels.stimuli_ID = {};
