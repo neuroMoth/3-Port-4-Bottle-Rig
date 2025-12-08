@@ -1,6 +1,11 @@
 %% Code written by Roberto Vincis, FSU ---- Edited for Samuelsen Lab by Blake Hourigan 7/17/25
+%% Additional edits for Samuelsen Lab by Timothy Vladimir Dong 12/8/25
 % This code is called from the BPod Console to setup the parameters for 3 port ... experiment
 
+%% Note from TVD: 
+% If you want to change the default_protocol_settings you need to manually
+% delete the cached file for default settings under 'FakeSubject,' or else
+% the protocol will still load the old values. 
 
 % get the filename of the default settings so we can delete it and avoid
 % using cached file instead of the one we are making now 
@@ -52,28 +57,32 @@ end
 
 S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
 
-% create an empty list of ValveDetails objects
-valves = ValveDetails.empty();
-
+% create an empty list of ValveDetails objects (will overwrite later)
+valves = ValveDetails.empty(); 
 for i = 1:Set_param_constants.NUM_VALVES
-
-    valve_open_time_def = GetValveTimes(5,i); 
-    new_valve = ValveDetails(i, 10, valve_open_time_def);
-
+    new_valve = ValveDetails(i, 30, 50);
     valves(end +1) = new_valve;
 end
 
 % set protocol defaults if not yet set. this generates the gui for the program and 
 % sets up field to enter for protocol. 
 if isempty(fieldnames(S))  % If settings file was an empty struct, populate struct with default settings
-    S = default_protocol_settings(S, valves);
-
+    S = default_protocol_settings(S,valves);
     BpodSystem.ProtocolSettings = S;
+end
+
+% Get actual valve open times
+valves = ValveDetails.empty(); 
+targetAmounts = str2double(S.GUIMeta.select_amount_liquid_ul.String); 
+for i = 1:Set_param_constants.NUM_VALVES
+    valve_open_time_def = GetValveTimes(targetAmounts(S.GUI.select_amount_liquid_ul),i); 
+    new_valve = ValveDetails(i, targetAmounts(S.GUI.select_amount_liquid_ul), valve_open_time_def);
+
+    valves(end +1) = new_valve;
 end
 
 % Initialize parameter GUI plugin with gui returned from default_protocol_settings
 BpodParameterGUI('init', S); 
-
 
 %% BEGIN REPEATING STATE MACHINE -- LAST 10 MINUTES -- CONTINUOUSLY SAVES SETTINGS
 for i = 1:Set_param_constants.NUM_SECONDS
@@ -82,10 +91,12 @@ for i = 1:Set_param_constants.NUM_SECONDS
 
     sma = NewStateMachine();
 
-    sma = AddState(sma, 'Name', 'ITI', ...
+    sma = SetGlobalTimer(sma, 'TimerID', 1, 'Duration', 1000);
+
+    sma = AddState(sma, 'Name', 'Check_Parameters', ...
         'Timer',3,...
         'StateChangeConditions', {'Tup', '>exit'},...
-        'OutputActions', {}); 
+        'OutputActions', {'GlobalTimerTrig', 1}); 
 
     % Send description to the Bpod State Machine device
     SendStateMachine(sma);
@@ -95,16 +106,16 @@ for i = 1:Set_param_constants.NUM_SECONDS
 
     if ~isempty(fieldnames(RawEvents)) % If you didn't stop the session manually mid-trial
 
-        for v =  1:Set_param_constants.NUM_VALVES
-            % dynamically gets the number of the odor based on i.
-            id = v;
-            valve_line_number = sprintf('valve_line_%d', id);
-
-            stimulus_id_field = sprintf('stimulus_ID_%d', id);
-
-            % fill in dynamically generated variable name to get the value
-            S.GUI.(stimulus_id_field) = S.GUIMeta.(valve_line_number).String{S.GUI.(valve_line_number)};
-        end
+        % for v =  1:Set_param_constants.NUM_VALVES
+        %     % dynamically gets the number of the odor based on i.
+        %     id = v;
+        %     valve_line_number = sprintf('valve_line_%d', id);
+        % 
+        %     stimulus_id_field = sprintf('stimulus_ID_%d', id);
+        % 
+        %     % fill in dynamically generated variable name to get the value
+        %     S.GUI.(stimulus_id_field) = S.GUIMeta.(valve_line_number).String{S.GUI.(valve_line_number)};
+        % end
 
         if S.GUI.calibration_or_clean == 1
             S = set_valve_open_values(S, valves, 'calibrated');   
@@ -112,11 +123,10 @@ for i = 1:Set_param_constants.NUM_SECONDS
             S = set_valve_open_values(S, valves ,'user');   
         end
 
-
         % sync parameters to gui inputs
         S = BpodParameterGUI('sync', S);
 
-        S.stimuli_sequence = gen_stimuli_sequence(BpodSystem);
+        % S.stimuli_sequence = gen_stimuli_sequence(BpodSystem);
 
         BpodSystem.ProtocolSettings = S;
 

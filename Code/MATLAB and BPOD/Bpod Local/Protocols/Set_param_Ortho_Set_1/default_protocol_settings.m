@@ -1,26 +1,25 @@
 function protocol_settings = default_protocol_settings(protocol_settings, valves)
     % Function that intakes a BpodSystem ProtocolSettings object and returns 
     % the object with default settings for the protocol.
-    
 
-    valve_labels = {'1','2','3','4','5', '6', '7', '8'};
-    liquid_amount_options = {'1','1.5','2','2.5','3','3.5','4','4.5','5','5.5','6','6.5','7','7.5','8','8.5', '10'};
+    %valve_labels = {'1','2','3','4','5', '6', '7', '8'};
+    liquid_amount_options = {'1','5','10','15','20','25','30','35','40'};
 
-    default_liquid_index = find(cellfun(@(x) strcmp(x,'10'), liquid_amount_options));
+    %default_liquid_index = find(cellfun(@(x) strcmp(x,'10'), liquid_amount_options));
 
-    protocol_settings = create_popup_menu(protocol_settings, "select_taste_valve", 1, valve_labels);
+    %protocol_settings = create_popup_menu(protocol_settings, "select_taste_valve", 1, valve_labels);
 
-    protocol_settings = create_popup_menu(protocol_settings, "select_amount_liquid_ul", 17, liquid_amount_options);
+    protocol_settings = create_popup_menu(protocol_settings, "select_amount_liquid_ul", 7, liquid_amount_options);
 
     calibration_or_manual_values = {'Use Calibration Values', 'Manually Set Opening Times'};
     protocol_settings = create_popup_menu(protocol_settings, "calibration_or_clean", 1, calibration_or_manual_values);
 
     % create variables threshold_licks and num_trials and make them user editable fields
-    protocol_settings.GUI.threshold_licks = 7;
-    protocol_settings.GUIMeta.threshold_licks.Style = 'edit'; 
-
-    protocol_settings.GUI.num_trials = 210;
-    protocol_settings.GUIMeta.num_trials.Style = 'edit'; 
+    % protocol_settings.GUI.threshold_licks = 7;
+    % protocol_settings.GUIMeta.threshold_licks.Style = 'edit'; 
+    % 
+    % protocol_settings.GUI.num_trials = 210;
+    % protocol_settings.GUIMeta.num_trials.Style = 'edit'; 
 
     if protocol_settings.GUI.calibration_or_clean == 1
         % if S.GUI.calibration_or_clean popup has the first option selected (use calibration values) then go find those 
@@ -40,7 +39,7 @@ function protocol_settings = default_protocol_settings(protocol_settings, valves
     end
 
     %%% BEGIN CREATE MANUAL TEST VALVES BUTTON PANEL %%% 
-    protocol_settings.GUIPanels.Manual_Taste_Valves = {};
+    % protocol_settings.GUIPanels.Manual_Taste_Valves = {};
     for i = 1:Set_param_constants.NUM_VALVES
         valve_number = i;
 
@@ -49,9 +48,9 @@ function protocol_settings = default_protocol_settings(protocol_settings, valves
         opening_time_field = sprintf('open_time_%d', valve_number);
 
         protocol_settings.GUI.(valve_name) = sprintf('Manual_Open_Valve(1,%d,BpodSystem.ProtocolSettings.GUI.%s)', valve_number, opening_time_field);
-        protocol_settings.GUIMeta.(valve_name).Style = 'pushbutton';
-
-        protocol_settings.GUIPanels.Manual_Taste_Valves{end + 1} = valve_name;
+        % protocol_settings.GUIMeta.(valve_name).Style = 'pushbutton';
+        % 
+        % protocol_settings.GUIPanels.Manual_Taste_Valves{end + 1} = valve_name;
 
     end
 
@@ -80,34 +79,34 @@ end
 %%% END PANEL %%% 
 
 %% unsure of what this does at this time
-odor_set_options = {'first set of 7 odors','second set of 7 odors','third set of 7 odors'};
-protocol_settings = create_popup_menu(protocol_settings, 'odor_set', 3, odor_set_options);
+% odor_set_options = {'first set of 7 odors','second set of 7 odors','third set of 7 odors'};
+% protocol_settings = create_popup_menu(protocol_settings, 'odor_set', 3, odor_set_options);
 %% unsure of what this does at this time
 
 
 %% Setup for text panel displaying odor selections 
-protocol_settings.GUIPanels.stimuli_ID = {};
-for i = 1:Set_param_constants.NUM_VALVES
-    stimulus_id= i;
-
-    variable_name = sprintf('stimulus_ID_%d', stimulus_id);
-    valve_line_value = sprintf("valve_line_%d", stimulus_id);
-
-    stimulus_name = protocol_settings.GUI.(valve_line_value);
-
-    protocol_settings.GUIMeta.(variable_name).Style = 'text';
-    protocol_settings.GUI.(variable_name) = protocol_settings.GUIMeta.(valve_line_value).String{stimulus_name};
-
-    protocol_settings.GUIPanels.stimuli_ID{end + 1} = variable_name;
-end
+% protocol_settings.GUIPanels.stimuli_ID = {};
+% for i = 1:Set_param_constants.NUM_VALVES
+%     stimulus_id= i;
+% 
+%     variable_name = sprintf('stimulus_ID_%d', stimulus_id);
+%     valve_line_value = sprintf("valve_line_%d", stimulus_id);
+% 
+%     stimulus_name = protocol_settings.GUI.(valve_line_value);
+% 
+%     protocol_settings.GUIMeta.(variable_name).Style = 'text';
+%     protocol_settings.GUI.(variable_name) = protocol_settings.GUIMeta.(valve_line_value).String{stimulus_name};
+% 
+%     protocol_settings.GUIPanels.stimuli_ID{end + 1} = variable_name;
+% end
 
 end
 
 function settings_struct = create_popup_menu(settings_struct, fieldname, default_value, options)
-    %function used to create a popup menu in the GUI. Takes current Bpod ProtocolSettings object and 
-    % returns a new one with a new popup menu with the user supplied fieldname (new field variable name),
-    % default value, and options (available items to select from).
-    arguments
+%function used to create a popup menu in the GUI. Takes current Bpod ProtocolSettings object and
+% returns a new one with a new popup menu with the user supplied fieldname (new field variable name),
+% default value, and options (available items to select from).
+arguments
     settings_struct struct
     fieldname string
     default_value (1,1) double {mustBeInteger, mustBePositive}
