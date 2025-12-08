@@ -65,7 +65,7 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
     if isempty(fieldnames(S)) % If /
 
         subj = BpodSystem.GUIData.SubjectName;
-        dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\FakeSubject\Set_param_Ortho_Set_1\Session Settings\DefaultSettings.mat'];
+        dir = 'C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\FakeSubject\Set_param_Ortho_Set_1\Session Settings\DefaultSettings.mat';
         temp = load(dir);
         S = temp.ProtocolSettings; clear temp;
 
@@ -81,7 +81,7 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
 
         S.GUIMeta = rmfield(S.GUIMeta, fields); % Using a cell array
         S.GUI = rmfield(S.GUI, fields);
-        S.GUIPanels = rmfield(S.GUIPanels, {'Current_valve_assignments','Manual_Taste_Valves'});
+        S.GUIPanels = rmfield(S.GUIPanels, {'Current_valve_assignments'});
         BpodSystem.ProtocolSettings = S;
     end
 
@@ -142,8 +142,8 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
         sma = NewStateMachine();
 
         % set global timers for the maximum duration of the experiment and the maximum sample time of 2 seconds.
-        sma = SetGlobalTimer(sma, 'TimerID', expV.experimentTimerID, 'Duration', expV.TOTAL_ALLOWED_TIME);
-        sma = SetGlobalTimer(sma, 'TimerID', expV.lickWindowTimerID, 'Duration', expV.LICK_WINDOW);
+        sma = SetGlobalTimer(sma, 'TimerID', expV.EXPERIMENT_TIMER_ID, 'Duration', expV.TOTAL_ALLOWED_TIME);
+        sma = SetGlobalTimer(sma, 'TimerID', expV.LICK_WINDOW_TIMER_ID, 'Duration', expV.LICK_WINDOW);
 
         % set global counters for each of the possible input ports (AnalogIn1 ports 1-4) to 6.
         sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, num_dryLicks); % Arguments: (sma, CounterNumber, TargetEvent, Threshold)?
