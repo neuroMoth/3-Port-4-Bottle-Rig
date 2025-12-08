@@ -13,7 +13,7 @@ function protocol_settings = default_protocol_settings(protocol_settings)
     end
 
     valve_labels = {'1','2','3','4','5', '6', '7', '8'};
-    liquid_amount_options = {'5','10','15','20','25','30'};
+    liquid_amount_options = {'1','1.5','2','2.5','3','3.5','4','4.5','5','5.5','6','6.5','7','7.5','8','8.5';
 
     default_liquid_index = find(cellfun(@(x) strcmp(x,'5'), liquid_amount_options));
 
@@ -25,7 +25,7 @@ function protocol_settings = default_protocol_settings(protocol_settings)
     protocol_settings = create_popup_menu(protocol_settings, "calibration_or_clean", 1, calibration_or_manual_values);
 
     % create variables threshold_licks and num_trials and make them user editable fields
-    protocol_settings.GUI.threshold_licks = 3;
+    protocol_settings.GUI.threshold_licks = 7;
     protocol_settings.GUIMeta.threshold_licks.Style = 'edit'; 
 
     protocol_settings.GUI.num_trials = 210;
