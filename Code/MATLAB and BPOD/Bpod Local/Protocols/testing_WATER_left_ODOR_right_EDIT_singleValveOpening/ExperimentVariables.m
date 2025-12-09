@@ -7,7 +7,8 @@ classdef ExperimentVariables
         TTC_LATERAL_TIME = 5; %seconds
         LICK_WINDOW = 2; %seconds | Defines amount of seconds rat has to complete required amount of licks.
         DELAY_TIME = 3; %seconds | delay from closing the center door to opening the lateral door
-        BLANK_OPEN_TIME = 30/1000; %seconds divided by 1000 to convert to ms - will add variance with random jitter 
+        STIMULUS_WINDOW = 125/1000; %ms after valve closes before door goes up (if still within LICK_WINDOW)
+        BLANK_OPEN_TIME = 20/1000; %seconds divided by 1000 to convert to ms - will add variance with random jitter 
 
         MAXIMUM_TRIALS = 160;
         MINIMUM_TRIALS = 100;
@@ -24,8 +25,10 @@ classdef ExperimentVariables
 
         EXPERIMENT_TIMER_ID = 1;
         LICK_WINDOW_TIMER_ID = 2;
+        STIM_WINDOW_TIMER_ID = 3; 
         
         experimentTimeExpired = 'GlobalTimer1_End';
         lickTimeExpired = 'GlobalTimer2_End';
+        stimTimeExpired = 'GlobalTimer3_End';
     end
 end
