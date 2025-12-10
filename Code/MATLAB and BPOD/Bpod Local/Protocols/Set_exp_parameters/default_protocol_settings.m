@@ -48,7 +48,7 @@ function protocol_settings = default_protocol_settings(protocol_settings, valves
         opening_time_field = sprintf('open_time_%d', valve_number);
 
         protocol_settings.GUI.(valve_name) = sprintf('Manual_Open_Valve(1,%d,BpodSystem.ProtocolSettings.GUI.%s)', valve_number, opening_time_field);
-        % protocol_settings.GUIMeta.(valve_name).Style = 'pushbutton';
+        protocol_settings.GUIMeta.(valve_name).Style = 'pushbutton';
         % 
         % protocol_settings.GUIPanels.Manual_Taste_Valves{end + 1} = valve_name;
 

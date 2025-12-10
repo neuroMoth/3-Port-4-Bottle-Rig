@@ -47,7 +47,6 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
     % Generating lineup and jitter for valve openings
     [center_port_valve_lineup, reward_lick_lineup, center_delay_lineup, blankJitter] = GenerateJitterAndCenterLineup(); 
     BpodSystem.Data.centerValveDelay = center_delay_lineup;
-    BpodSystem.Data.blankOpenTimes = expV.BLANK_OPEN_TIME + blankJitter; 
 
     %BpodSystem.Data.center_valve_lineup = center_port_valve_lineup;
 
@@ -89,11 +88,15 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
         BpodSystem.ProtocolSettings.GUI.open_time_3; BpodSystem.ProtocolSettings.GUI.open_time_4; ...
         BpodSystem.ProtocolSettings.GUI.open_time_5; BpodSystem.ProtocolSettings.GUI.open_time_6; 
         BpodSystem.ProtocolSettings.GUI.open_time_7; BpodSystem.ProtocolSettings.GUI.open_time_8];
-    BpodSystem.Data.valveOpenTimes = table(valveID,valveOpenTimes);
+    BpodSystem.Data.valveOpenTimes = table(valveID,valveOpenTimes); % This time is in ms
     
     totalValveWindow = ceil(mean(valveOpenTimes)/10)*10; % round up to nearest 10 ms to set stim window
-    fullStimWindow = totalValveWindow + expV.STIMULUS_WINDOW;
+    fullStimWindow = (totalValveWindow/1000) + expV.STIMULUS_WINDOW; % convert totalValve window to seconds
     BpodSystem.Data.fullStimulusWindow = fullStimWindow; 
+
+    blankJitter(:,1) = ((floor(min(valveOpenTimes(2:7))/10)*10)/1000) - blankJitter(:,1);
+    %blankJitter(:,2) = ((floor(min(valveOpenTimes([1 8]))/10)*10)/1000) - blankJitter(:,2); 
+    BpodSystem.Data.blankOpenTimes = blankJitter; 
 
     % port_1 is the instance of the class Port1
     port_1 = LateralPort(1);
@@ -132,14 +135,14 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
         correct_port = correct_port.setCorrect(port_1, port_3, center_stimulus_valve);
         incorrect_port = incorrect_port.setIncorrect(port_1, port_3, center_stimulus_valve);
 
-        fprintf('Center=valve%d. %d dry licks. ',center_stimulus_valve,num_dryLicks);
-        fprintf('Correct=port%d. ',correct_port.port); fprintf('Incorrect=port%d. ',incorrect_port.port);
-
         % Get blank jitter and offset between blank and true valve closing times
-        center_timeOffset = expV.BLANK_OPEN_TIME + blankJitter(trial,1);
-        center_blankTime = center_port.left_valve_time - center_timeOffset; 
-        lateral_timeOffset = expV.BLANK_OPEN_TIME + blankJitter(trial,2); 
-        lateral_blankTime = correct_port.valve_time - lateral_timeOffset; 
+        center_blankTime = blankJitter(trial, 1); 
+        center_timeOffset = center_port.left_valve_time - center_blankTime;
+        lateral_blankTime = correct_port.valve_time - (0.02 + blankJitter(trial,2)); 
+        lateral_timeOffset = (0.02 + blankJitter(trial,2)); 
+
+        fprintf('Center=valve%d. %d dry licks. %dms valve delay. ',center_stimulus_valve, num_dryLicks, center_valveDelay*1000);
+        fprintf('Correct=port%d. ',correct_port.port); fprintf('Incorrect=port%d. ',incorrect_port.port);
 
         %% Start State Machine for this Trial
         sma = NewStateMachine();
@@ -149,7 +152,7 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
         sma = SetGlobalTimer(sma, 'TimerID', expV.LICK_WINDOW_TIMER_ID, 'Duration', expV.LICK_WINDOW); % 2 seconds to get all dry licks
         sma = SetGlobalTimer(sma, 'TimerID', expV.STIM_WINDOW_TIMER_ID, 'Duration', fullStimWindow); % Max time after valve opens before door goes up
 
-        % set global counters for each of the possible input ports (AnalogIn1 ports 1-4) to 6.
+        % set global counters for each of the possible input ports (AnalogIn1 ports 1-4).
         sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, num_dryLicks); % Arguments: (sma, CounterNumber, TargetEvent, Threshold)?
         sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks);
         sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 3);
@@ -215,12 +218,13 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
         sma = AddState(sma, 'Name', 'delayCenterValve', ...
             'Timer', center_valveDelay,...
             'StateChangeConditions', {'Tup', 'openCenterValve'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'GlobalTimerTrig', expV.STIM_WINDOW_TIMER_ID});
+            'OutputActions',{center_port.DOOR, expV.DOWN});
 
         sma = AddState(sma, 'Name', 'openCenterValve', ...
             'Timer', center_blankTime,...
             'StateChangeConditions', {'Tup', 'closeCenterBlank'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.left_valve], 'BNC1', 1});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.left_valve], ...
+            'BNC1', 1, 'GlobalTimerTrig', expV.STIM_WINDOW_TIMER_ID});
 
          sma = AddState(sma, 'Name', 'closeCenterBlank', ...
             'Timer', center_timeOffset,...

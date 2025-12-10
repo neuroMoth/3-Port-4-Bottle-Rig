@@ -6,12 +6,19 @@ function [center_lineup, rewardLickSelect, rewardDelays, blankValveJitter] = Gen
     expV = ExperimentVariables;
     total_trials = expV.MAXIMUM_TRIALS;
     block_size = expV.TRIALS_PER_BLOCK;
-
-    valveSet1 = [2,4]; valveSet2 = [5,7]; 
+    
+    rewardLickRange = expV.REWARD_LICKS; 
+    jitterRange = expV.BLANK_OPEN_TIME; 
+    rewardDelayRange = expV.REWARD_VALVE_DELAY; 
+    
+    valveSet1 = expV.VALVE_SET1;
+    valveSet2 = expV.VALVE_SET2; 
     valves = [valveSet1,valveSet2]; % Now with all valves
-    rewardLickRange = [4 5 6]; % Range of possible reward licks
-    rewardDelayRange = [0 30 60]/1000; % delay from lick detection to valve opening
-    jitterRange = [-15 -10 0]/1000; % blank valve jitter for every trial and valve opening at the start % range converted to ms 
+
+    % valveSet1 = [2,4]; valveSet2 = [5,7]; 
+    % rewardLickRange = [4 5 6]; % Range of possible reward licks
+    % rewardDelayRange = [0 30 60]/1000; % delay from lick detection to valve opening
+    % jitterRange = [-blank_baseTime -10 -5 0]/1000; % blank valve jitter for every trial and valve opening at the start % range converted to ms 
 
     num_blocks = total_trials / block_size; % = 10
     num_valves = length(valves); % = 6
@@ -70,7 +77,7 @@ function [center_lineup, rewardLickSelect, rewardDelays, blankValveJitter] = Gen
             delay_nReps = floor(nValveTr / n_rewardDelay); % = 1
             delay_remaining = mod(nValveTr, n_rewardDelay); % = 0 or 1
 
-            jitter_nReps = floor(nValveTr / n_jitter); % 20/4 = 5
+            jitter_nReps = floor(nValveTr / n_jitter); 
             jitterRemaining = mod(nValveTr, n_jitter);
             
             lickBlock_base = repmat(rewardLickRange, 1, lick_nReps); 

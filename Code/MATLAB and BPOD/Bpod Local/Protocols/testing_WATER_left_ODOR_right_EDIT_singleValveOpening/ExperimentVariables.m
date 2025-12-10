@@ -7,8 +7,14 @@ classdef ExperimentVariables
         TTC_LATERAL_TIME = 5; %seconds
         LICK_WINDOW = 2; %seconds | Defines amount of seconds rat has to complete required amount of licks.
         DELAY_TIME = 3; %seconds | delay from closing the center door to opening the lateral door
-        STIMULUS_WINDOW = 125/1000; %ms after valve closes before door goes up (if still within LICK_WINDOW)
-        BLANK_OPEN_TIME = 20/1000; %seconds divided by 1000 to convert to ms - will add variance with random jitter 
+        STIMULUS_WINDOW = 200/1000; %ms after valve closes before door goes up (if still within LICK_WINDOW)
+
+        VALVE_SET1 = [2,4];
+        VALVE_SET2 = [5,7];
+        
+        REWARD_LICKS = [4 5 6]; %range of possible rewarded lick to be pseudorandomized per valve
+        REWARD_VALVE_DELAY = [0 30 60]/1000; % delay from lick detection to valve opening
+        BLANK_OPEN_TIME = ([0 5 10])/1000; %seconds divided by 1000 to convert to ms - range to use for jitter
 
         MAXIMUM_TRIALS = 160;
         MINIMUM_TRIALS = 100;
