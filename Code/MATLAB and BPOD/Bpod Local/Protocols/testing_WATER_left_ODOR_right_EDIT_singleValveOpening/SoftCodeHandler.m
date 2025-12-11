@@ -5,7 +5,7 @@ function SoftCodeHandler(Byte)
 
     switch (Byte)
         case 1
-            BpodSystem.Status.ExitTrialLoop = true;
+            BpodSystem.Status.ExitTrialLoop = true; % End of session
             BpodSystem.Status.BeingUsed = 0;
         case 2 
             % trial was not engaged, increment consecutiveRatSkips
