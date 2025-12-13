@@ -51,7 +51,7 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
     if isempty(fieldnames(S)) % If /
 
         subj = BpodSystem.GUIData.SubjectName;
-        dir = 'C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\FakeSubject\Set_param_Ortho_Set_1\Session Settings\DefaultSettings.mat';
+        dir = 'C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\FakeSubject\Set_exp_parameters\Session Settings\DefaultSettings.mat';
         temp = load(dir);
         S = temp.ProtocolSettings; clear temp;
 
@@ -106,7 +106,7 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
 
     %% MAIN TRIAL LOOP
     % do MAXIMUM_TRIALS as defined in ExperimentVariables file if 60 minutes has not elapsed.
-    for trial= 1:expV.MAXIMUM_TRIALS
+    for trial = 1:expV.MAXIMUM_TRIALS
         
         S = BpodParameterGUI('sync', S); % Sync parameters with BpodParameterGUI plugin
         
@@ -134,7 +134,6 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
         if (mod(trial, (expV.TRIALS_PER_BLOCK + 1)) == 0)
             BpodSystem.Status.consecutiveRatSkips = 0;
         end
-
         % evaluate if minimum trial number is reached, and if 10 consecutive traials have been skipped
         if (expV.MINIMUM_TRIALS) 
             if(BpodSystem.Status.consecutiveRatSkips >= expV.SKIPPED_TRIALS_THRESHOLD)
@@ -191,7 +190,7 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
             'OutputActions',{center_port.DOOR, expV.DOWN, 'GlobalTimerTrig', expV.LICK_WINDOW_TIMER_ID});
         sma = AddState(sma, 'Name', 'waitForRemainingCenterDryLicks', ...
             'Timer', 0,...
-            'StateChangeConditions', {center_port.LEFT_COUNTER_EVENT, 'waitCenterRewardLick', expV.experimentTimeExpired, ...
+            'StateChangeConditions', {center_port.LEFT_COUNTER_EVENT, 'waitCenterRewardLick', expV.experimentTimeExpired , ...
             'cleanup', expV.lickTimeExpired , 'reportSkip'},...
             'OutputActions',{center_port.DOOR, expV.DOWN});
         sma = AddState(sma, 'Name', 'waitCenterRewardLick', ...
@@ -225,7 +224,8 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
         sma = AddState(sma, 'Name', 'ttcLateralTimeout', ...
             'Timer', expV.DELAY_TIME,...
             'StateChangeConditions', {'Tup', 'ttcLateral', expV.experimentTimeExpired , 'cleanup'},...
-            'OutputActions',{center_port.DOOR, expV.UP, 'GlobalCounterReset', port_3.COUNTER_ID,'SoftCode', 3});
+            'OutputActions',{center_port.DOOR, expV.UP, 'GlobalCounterReset', port_3.COUNTER_ID, ...
+            'SoftCode', 3});
         sma = AddState(sma, 'Name', 'ttcLateral', ...
             'Timer', expV.TTC_LATERAL_TIME,...
             'StateChangeConditions', {'Tup', 'reportSkip', correct_port.lick_event, 'waitLateralDryLicks', incorrect_port.lick_event,...
@@ -311,15 +311,13 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
         end
         HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
 
-        if (BpodSystem.Status.ExitTrialLoop == 1 || BpodSystem.Status.BeingUsed == 0)
-            A.scope_StartStop; % Stop Oscope GUI
-            A.endAcq; % Close Oscope GUI
-            A.stopReportingEvents; % Stop sending events to state machine
-            clear A
-            clear W
-
+        if (BpodSystem.Status.ExitTrialLoop || BpodSystem.Status.BeingUsed == 0)
+            stop_experiment(A, W);
             return
         end
         fprintf('\n')
     end
+
+    stop_experiment(A, W);
+    return
 end
