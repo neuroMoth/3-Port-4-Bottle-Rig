@@ -311,13 +311,12 @@ function testing_WATER_left_ODOR_right_EDIT_singleValveOpening
         end
         HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
 
-        if (BpodSystem.Status.ExitTrialLoop || BpodSystem.Status.BeingUsed == 0)
+        fprintf('\n')
+
+        if (BpodSystem.Status.ExitTrialLoop || BpodSystem.Status.BeingUsed == 0 || trial == expV.MAXIMUM_TRIALS)
             stop_experiment(A, W);
+            sessionSummary();
             return
         end
-        fprintf('\n')
     end
-
-    stop_experiment(A, W);
-    return
 end

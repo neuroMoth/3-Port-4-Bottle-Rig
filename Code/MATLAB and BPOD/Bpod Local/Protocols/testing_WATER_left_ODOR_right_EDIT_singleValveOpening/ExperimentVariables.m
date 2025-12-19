@@ -13,7 +13,7 @@ classdef ExperimentVariables
         VALVE_SET2 = [5,7];
         
         REWARD_LICKS = [4 5 6]; %range of possible rewarded lick to be pseudorandomized per valve
-        REWARD_VALVE_DELAY = [0 30 60]/1000; % delay from lick detection to valve opening
+        REWARD_VALVE_DELAY = [10 25 50 75]/1000; % delay from lick detection to valve opening
         BLANK_OPEN_TIME = ([0 5 10])/1000; %seconds divided by 1000 to convert to ms - range to use for jitter
 
         MAXIMUM_TRIALS = 160;
