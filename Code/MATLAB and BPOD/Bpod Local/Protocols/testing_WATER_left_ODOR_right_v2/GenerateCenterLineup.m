@@ -10,17 +10,18 @@ maxRepeats = expV.MAX_REPEATS;
 
 rewardLickRange = expV.REWARD_LICKS;
 rewardDelayRange = expV.REWARD_VALVE_DELAY;
-% jitterRange = expV.BLANK_OPEN_TIME;
 
 valveSet1 = expV.VALVE_SET1;
 valveSet2 = expV.VALVE_SET2;
-valves = [valveSet1, valveSet2]; % Now with all valves
 
 num_blocks = total_trials / block_size; % = 8
-num_valves = length(valves); % = 6
+n_v1 = numel(valveSet1); n_v2 = numel(valveSet2);
 n_lickRange = numel(rewardLickRange); % = 3
 n_rewardDelay = numel(rewardDelayRange); % = 3
-% n_jitter = length(jitterRange);
+
+% Set threshold for valve repeats on the same side (constraint in addition to max side repeats)
+if n_v1 == 1; maxV1Rep = inf; else; maxV1Rep = 2; end
+if n_v2 == 1; maxV2Rep = inf; else; maxV2Rep = 2; end
 
 %% --- First: pseudorandom order generation for trial side order ---
 isValid = false; attempts = 0;
@@ -72,27 +73,54 @@ blockStep = 1:block_size:total_trials;
 for j = 1:num_blocks
     % Generate roughly balanced sampling for each variable type
     % Each list is sampled so each element appears about equally often
-    numValves1 = ceil(block_size / (2*numel(valveSet1))); numValves2 = ceil(block_size / (2*numel(valveSet2)));
+    numValves1 = ceil(block_size / (2*n_v1)); numValves2 = ceil(block_size / (2*n_v2));
     numRewLick = ceil(block_size / (2*n_lickRange));
     numDelays = ceil(block_size / (2*n_rewardDelay));
 
-    v1_seq = repmat(valveSet1, 1, numValves1); v2_seq = repmat(valveSet2, 1, numValves2);
     lickN_seq = repmat(rewardLickRange, 1, numRewLick);
     delay_seq = repmat(rewardDelayRange, 1, numDelays);
 
     % Randomly permute within each variable type
-    v1_seq = v1_seq(randperm(block_size/2)); v2_seq = v2_seq(randperm(block_size/2));
     lickN_seq = lickN_seq(randperm(numel(lickN_seq)));
     delay_seq = delay_seq(randperm(numel(delay_seq)));
     % Truncate to desired trial count
-    v1_seq = v1_seq(1:(block_size/2)); v2_seq = v2_seq(1:(block_size/2));
     lickN_seq = lickN_seq(1:(block_size/2));
     delay_seq = delay_seq(1:(block_size/2));
+
+    % Check whether each valve sequence per side exceeds repeat limits
+    isValidV1 = false; attemptsV1 = 0;
+    while ~isValidV1
+        attemptsV1 = attemptsV1 + 1; 
+        % Correct side randomization
+        v1_seq = repmat(valveSet1, 1, numValves1);
+        v1_seq = v1_seq(randperm(numel(v1_seq)));  % Shuffle the block
+        v1_seq = v1_seq(1:(block_size/2)); 
+        % Check validity of this block
+        if isValidSequence(v1_seq, maxV1Rep); isValidV1 = true; end
+        % Safety break
+        if attemptsV1 > 1000
+            error('Could not find a valid sequence after many attempts. Try loosening constraints.');
+        end
+    end
+    isValidV2 = false; attemptsV2 = 0;
+    while ~isValidV2
+        attemptsV2 = attemptsV2 + 1; 
+        % Correct side randomization
+        v2_seq = repmat(valveSet2, 1, numValves2);
+        v2_seq = v2_seq(randperm(numel(v2_seq)));  % Shuffle the block
+        v2_seq = v2_seq(1:(block_size/2)); 
+        % Check validity of this block
+        if isValidSequence(v2_seq, maxV2Rep); isValidV2 = true; end
+        % Safety break
+        if attemptsV2 > 1000
+            error('Could not find a valid sequence after many attempts. Try loosening constraints.');
+        end
+    end
 
     % Optimize reward lick and delay shuffling to minimize repeated combinations
     % Heuristic search – reshuffles B and C to reduce identical combinations
     bestCombo1 = []; bestCombo2 = [];
-    bestRepeatCount = inf; maxIterations = 100;
+    bestRepeatCount = inf; maxIterations = 500;
     % Split each sequence to shuffle independently for each side (L/R)
     % Two separate for loops
     for k1 = 1:maxIterations
