@@ -106,7 +106,7 @@ for j = 1:num_blocks
         % Check validity of this block
         if isValidSequence(v1_seq, maxV1Rep); isValidV1 = true; end
         % Safety break
-        if attemptsV1 > 1000
+        if attemptsV1 > 2000
             error('Could not find a valid sequence after many attempts. Try loosening constraints.');
         end
     end
@@ -123,7 +123,7 @@ for j = 1:num_blocks
         % Check validity of this block
         if isValidSequence(v2_seq, maxV2Rep); isValidV2 = true; end
         % Safety break
-        if attemptsV2 > 1000
+        if attemptsV2 > 2000
             error('Could not find a valid sequence after many attempts. Try loosening constraints.');
         end
     end

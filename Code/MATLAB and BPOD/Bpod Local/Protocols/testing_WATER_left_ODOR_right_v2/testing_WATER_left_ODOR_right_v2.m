@@ -79,7 +79,7 @@ function testing_WATER_left_ODOR_right_v2
         BpodSystem.ProtocolSettings.GUI.open_time_7; BpodSystem.ProtocolSettings.GUI.open_time_8];
     BpodSystem.Data.valveOpenTimes = table(valveID,valveOpenTimes); % This time is in ms
     
-    totalValveWindow = ceil(mean(valveOpenTimes)/10)*10; % round up to nearest 10 ms to set stim window
+    totalValveWindow = ceil(mean(valveOpenTimes)/100)*100; % round up to nearest 100 ms to set stim window
     fullStimWindow = (totalValveWindow/1000) + expV.STIMULUS_WINDOW; % convert totalValve window to seconds
     BpodSystem.Data.fullStimulusWindow = fullStimWindow; 
 
@@ -125,12 +125,12 @@ function testing_WATER_left_ODOR_right_v2
             BpodSystem.Status.consecutiveRatSkips = 0;
         end
         % evaluate if minimum trial number is reached, and if 10 consecutive traials have been skipped
-        if (expV.MINIMUM_TRIALS) 
-            if(BpodSystem.Status.consecutiveRatSkips >= expV.SKIPPED_TRIALS_THRESHOLD)
-                stop_experiment(A, W);
-                return
-            end
-        end
+        % if (expV.MINIMUM_TRIALS) 
+        %     if(BpodSystem.Status.consecutiveRatSkips >= expV.SKIPPED_TRIALS_THRESHOLD)
+        %         stop_experiment(A, W);
+        %         return
+        %     end
+        % end
 
         fprintf('Center=valve%d. %d dry licks. %dms valve delay. ',center_stimulus_valve, num_dryLicks, center_valveDelay*1000);
         fprintf('Correct=port%d. ',correct_port.port); fprintf('Incorrect=port%d. ',incorrect_port.port);
