@@ -64,37 +64,45 @@ end
 % changeIdx = [find(diff(side_lineup) ~= 0), length(side_lineup)]; sideReps = diff([0, changeIdx]);
 % histogram(sideReps, 'Normalization','probability','Normalization','pdf','DisplayStyle','stairs','LineWidth',2);
 % keyboard
- 
+
 %% --- Second: Shuffle center valves, reward lick #, and delay for each trial type ---
 center_lineup = []; rewardLickOrder = []; rewardDelays = [];
-blockStep = 1:block_size:total_trials; 
+blockStep = 1:block_size:total_trials;
 
 % --- Loop through each block to create the full lineup ---
 for j = 1:num_blocks
     % Generate roughly balanced sampling for each variable type
     % Each list is sampled so each element appears about equally often
-    numValves1 = ceil(block_size / (2*n_v1)); numValves2 = ceil(block_size / (2*n_v2));
-    numRewLick = ceil(block_size / (2*n_lickRange));
-    numDelays = ceil(block_size / (2*n_rewardDelay));
+    numValves1 = floor(block_size / (2*n_v1)); numValves2 = floor(block_size / (2*n_v2));
+    numRewLick = floor(block_size / (2*n_lickRange));
+    numDelays = floor(block_size / (2*n_rewardDelay));
 
     lickN_seq = repmat(rewardLickRange, 1, numRewLick);
-    delay_seq = repmat(rewardDelayRange, 1, numDelays);
+    extra_lickN = rewardLickRange(randperm(n_lickRange,(block_size/2)-(numRewLick*n_lickRange)));
+    lickN_seq = [lickN_seq, extra_lickN];
 
-    % Randomly permute within each variable type
-    lickN_seq = lickN_seq(randperm(numel(lickN_seq)));
-    delay_seq = delay_seq(randperm(numel(delay_seq)));
+    delay_seq = repmat(rewardDelayRange, 1, numDelays);
+    extra_delay = rewardDelayRange(randperm(n_rewardDelay,(block_size/2)-(numDelays*n_rewardDelay)));
+    delay_seq = [delay_seq, extra_delay];
+
     % Truncate to desired trial count
     lickN_seq = lickN_seq(1:(block_size/2));
     delay_seq = delay_seq(1:(block_size/2));
+    % Randomly permute within each variable type
+    lickN_seq = lickN_seq(randperm(numel(lickN_seq)));
+    delay_seq = delay_seq(randperm(numel(delay_seq)));
 
     % Check whether each valve sequence per side exceeds repeat limits
     isValidV1 = false; attemptsV1 = 0;
     while ~isValidV1
-        attemptsV1 = attemptsV1 + 1; 
+        attemptsV1 = attemptsV1 + 1;
         % Correct side randomization
         v1_seq = repmat(valveSet1, 1, numValves1);
-        v1_seq = v1_seq(randperm(numel(v1_seq)));  % Shuffle the block
-        v1_seq = v1_seq(1:(block_size/2)); 
+        extra_v1 = valveSet1(randperm(n_v1,(block_size/2)-(numValves1*n_v1)));
+        v1_seq = [v1_seq, extra_v1];
+        % Shuffle the block
+        v1_seq = v1_seq(randperm(numel(v1_seq)));
+        v1_seq = v1_seq(1:(block_size/2));
         % Check validity of this block
         if isValidSequence(v1_seq, maxV1Rep); isValidV1 = true; end
         % Safety break
@@ -104,11 +112,14 @@ for j = 1:num_blocks
     end
     isValidV2 = false; attemptsV2 = 0;
     while ~isValidV2
-        attemptsV2 = attemptsV2 + 1; 
+        attemptsV2 = attemptsV2 + 1;
         % Correct side randomization
         v2_seq = repmat(valveSet2, 1, numValves2);
-        v2_seq = v2_seq(randperm(numel(v2_seq)));  % Shuffle the block
-        v2_seq = v2_seq(1:(block_size/2)); 
+        extra_v2 = valveSet2(randperm(n_v2,(block_size/2)-(numValves2*n_v2)));
+        v2_seq = [v2_seq, extra_v2];
+        % Shuffle the block
+        v2_seq = v2_seq(randperm(numel(v2_seq)));
+        v2_seq = v2_seq(1:(block_size/2));
         % Check validity of this block
         if isValidSequence(v2_seq, maxV2Rep); isValidV2 = true; end
         % Safety break
@@ -126,8 +137,8 @@ for j = 1:num_blocks
     for k1 = 1:maxIterations
         % Shuffle reward lick and delays while keeping valve order fixed
         % Split each sequence to shuffle independently for each side (L/R)
-        lickN_seq1 = lickN_seq(randperm(block_size/2)); 
-        delay_seq1 = delay_seq(randperm(block_size/2)); 
+        lickN_seq1 = lickN_seq(randperm(block_size/2));
+        delay_seq1 = delay_seq(randperm(block_size/2));
 
         % Combine into trial matrix
         Trials_temp1 = [v1_seq(:), lickN_seq1(:), delay_seq1(:)];
@@ -171,7 +182,7 @@ for j = 1:num_blocks
     end
 
     %% USE THE SIDE LINEUP GENERATED EARLIER TO CREATE THE FULL CENTER ORDER
-    valveBlock = zeros(1, block_size); lickBlock = valveBlock; delayBlock = lickBlock; 
+    valveBlock = zeros(1, block_size); lickBlock = valveBlock; delayBlock = lickBlock;
     thisBlockSides = side_lineup(blockStep(j):(blockStep(j)+block_size-1));
 
     valveBlock(thisBlockSides == 0) = v1_seq; valveBlock(thisBlockSides == 1) = v2_seq;
@@ -242,18 +253,18 @@ end
 %             % Create the base list for one block
 %             valve_base_list = repmat(valves, 1, valve_num_reps); % repeat 1 row matrix of valves num_reps times
 %
-%             % Randomly select the 2 extra valves for this block
-%             if mod(num_remaining,2) == 0 && mod(num_valves,2) == 0
-%                 % keep number of tastes and water trials equal per block
-%                 extra_valves1 = valveSet1(randi(floor(num_valves/2), 1, floor(num_remaining/2)));
-%                 extra_valves2 = valveSet2(randi(floor(num_valves/2), 1, floor(num_remaining/2)));
-%                 extra_valves = [extra_valves1,extra_valves2];
-%             else
-%                 extra_valves = valves(randsample(num_valves, num_remaining)); % select 2 random integers in the range of num_valves
-%             end
+% % Randomly select the 2 extra valves for this block
+% if mod(num_remaining,2) == 0 && mod(num_valves,2) == 0
+%     % keep number of tastes and water trials equal per block
+%     extra_valves1 = valveSet1(randi(floor(num_valves/2), 1, floor(num_remaining/2)));
+%     extra_valves2 = valveSet2(randi(floor(num_valves/2), 1, floor(num_remaining/2)));
+%     extra_valves = [extra_valves1,extra_valves2];
+% else
+%     extra_valves = valves(randsample(num_valves, num_remaining)); % select 2 random integers in the range of num_valves
+% end
 %
-%             % Combine to create one complete, unshuffled block
-%             valve_unshuffled_block = [valve_base_list, extra_valves];
+% % Combine to create one complete, unshuffled block
+% valve_unshuffled_block = [valve_base_list, extra_valves];
 %
 %
 % % end
