@@ -9,20 +9,20 @@ classdef ExperimentVariables
         DELAY_TIME = 3; %seconds | delay from closing the center door to opening the lateral door
         STIMULUS_WINDOW = 200/1000; %ms after valve closes before door goes up (if still within LICK_WINDOW)
 
-        VALVE_SET1 = [2,4];
-        VALVE_SET2 = [5,7];
+        VALVE_SET1 = [2,3,4];
+        VALVE_SET2 = [5,6,7];
         
         REWARD_LICKS = [4 5 6]; %range of possible rewarded lick to be pseudorandomized per valve
-        REWARD_VALVE_DELAY = [10 25 50 75]/1000; % delay from lick detection to valve opening
-        BLANK_OPEN_TIME = ([0 5 10])/1000; %seconds divided by 1000 to convert to ms - range to use for jitter
+        REWARD_VALVE_DELAY = [10 25 50 75]/1000; %delay from lick detection to valve opening
+        %BLANK_OPEN_TIME = ([0 5 10])/1000; %seconds divided by 1000 to convert to ms - range to use for jitter
+ 
+        MAXIMUM_TRIALS = 160; 
+        MINIMUM_TRIALS = 100; 
+        TRIALS_PER_BLOCK = 20; 
+        MAX_REPEATS = 4; 
 
-        MAXIMUM_TRIALS = 180;
-        MINIMUM_TRIALS = 120;
-        TRIALS_PER_BLOCK = 30;
-        MAX_REPEATS = 6; 
-
-        SKIPPED_TRIALS_THRESHOLD = 20; % threshold of consecutive trials skipped in a 20 trial block to end early
-        %CORRECT_REQUIRED_TO_SWITCH = 2;
+        %SKIPPED_TRIALS_THRESHOLD = 20; % threshold of consecutive trials skipped in a 20 trial block to end early
+        %CORRECT_REQUIRED_TO_SWITCH = 2; % only for use with alternation training days 
 
         % these varaibles are used to make door commands more intuitive and easy to understand & read.
         UP = 0;
