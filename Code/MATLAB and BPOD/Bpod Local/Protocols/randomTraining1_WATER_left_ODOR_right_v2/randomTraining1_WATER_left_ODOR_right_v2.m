@@ -1,8 +1,8 @@
 % Original code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
 % V2 code edited/written by Timothy Vladimir Dong for Samuelsen Lab, Univeristy of Louisville----
 
-%% TESTING PROTOCOL V2 | WATER LEFT (Port 1)| ODOR RIGHT (Port 3)
-function testing_WATER_left_ODOR_right_v2
+%% RANDOM TRAINING 1 PROTOCOL V2 | WATER LEFT (Port 1)| ODOR RIGHT (Port 3)
+function randomTraining1_WATER_left_ODOR_right_v2
     
     global BpodSystem % Imports the BpodSystem object to the function workspace
 
