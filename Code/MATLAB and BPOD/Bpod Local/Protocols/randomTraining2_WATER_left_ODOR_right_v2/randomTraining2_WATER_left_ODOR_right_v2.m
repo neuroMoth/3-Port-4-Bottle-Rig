@@ -25,7 +25,7 @@ function randomTraining2_WATER_left_ODOR_right_v2
     BpodSystem.Data.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
-    BpodSystem.Data.firstRewardLick = zeros(expV.MAXIMUM_TRIALS, 1);
+    BpodSystem.Data.rewardLick = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.trialsEngaged = zeros(expV.MAXIMUM_TRIALS, 1);
 
     % Saving ExperimentVariables
@@ -145,14 +145,14 @@ function randomTraining2_WATER_left_ODOR_right_v2
 
         % set global counters for each of the possible input ports (AnalogIn1 ports 1-4). 
         % Arguments: (sma, CounterNumber, TargetEvent, Threshold)
-        sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, num_dryLicks); 
-        sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks);
-        sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 3);
-        sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 3);
+        sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, num_dryLicks+1); 
+        sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks+1);
+        sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 4);
+        sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 4);
 
         BpodSystem.Data.centerValve(trial) = center_port.left_valve;
         BpodSystem.Data.correctPort(trial) = correct_port.port;
-        BpodSystem.Data.firstRewardLick(trial) = num_dryLicks;
+        BpodSystem.Data.rewardLick(trial) = num_dryLicks+1;
 
         %% Adding States
         % First trial only: add experiment global timer

@@ -35,8 +35,9 @@ function alternation1_8nonconsecutive_WATER_left_ODOR_right_v2
     BpodSystem.Data.experimentVariables = expVarTable; % Save table to structure
 
     % Generating lineup and jitter for valve openings
-    [center_port_valve_lineup, reward_lick_lineup, center_delay_lineup] = GenerateCenterLineup();
-    BpodSystem.Data.centerValveDelay = center_delay_lineup; 
+    [first, water, odor, waterLick, odorLick, waterDelay, odorDelay] = GenerateCenterLineup_Alternation();
+    % [center_port_valve_lineup, reward_lick_lineup, center_delay_lineup] = GenerateCenterLineup();
+    % BpodSystem.Data.centerValveDelay = center_delay_lineup; 
 
     % configure the analog in. performed in configure_analog_in.m
     A = configure_analog_in();
@@ -145,14 +146,14 @@ function alternation1_8nonconsecutive_WATER_left_ODOR_right_v2
 
         % set global counters for each of the possible input ports (AnalogIn1 ports 1-4). 
         % Arguments: (sma, CounterNumber, TargetEvent, Threshold)
-        sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, num_dryLicks); 
-        sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks);
-        sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 3);
-        sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 3);
+        sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, num_dryLicks+1); 
+        sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks+1);
+        sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 4);
+        sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 4);
 
         BpodSystem.Data.centerValve(trial) = center_port.left_valve;
         BpodSystem.Data.correctPort(trial) = correct_port.port;
-        BpodSystem.Data.firstRewardLick(trial) = num_dryLicks;
+        BpodSystem.Data.firstRewardLick(trial) = num_dryLicks+1;
 
         %% Adding States
         % First trial only: add experiment global timer
