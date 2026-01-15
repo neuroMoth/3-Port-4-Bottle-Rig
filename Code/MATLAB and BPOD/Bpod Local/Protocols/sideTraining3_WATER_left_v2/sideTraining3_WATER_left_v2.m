@@ -1,7 +1,7 @@
 % Original code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
 % V2 code edited/written by Timothy Vladimir Dong for Samuelsen Lab, Univeristy of Louisville----
 
-%% Side Training 3 Water Left V2 PROTOCOL V2 | WATER LEFT (Port 1)| ODOR RIGHT (Port 3)
+%% SIDE TRAINING 3 (Days 5&6) WATER LEFT PROTOCOL V2 | WATER LEFT (Port 1)| ODOR RIGHT (Port 3)
 function sideTraining3_WATER_left_v2
     
     global BpodSystem % Imports the BpodSystem object to the function workspace
@@ -25,7 +25,7 @@ function sideTraining3_WATER_left_v2
     BpodSystem.Data.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
-    BpodSystem.Data.rewardLick = zeros(expV.MAXIMUM_TRIALS, 1);
+    BpodSystem.Data.firstRewardLick = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.trialsEngaged = zeros(expV.MAXIMUM_TRIALS, 1);
 
     % Saving ExperimentVariables
@@ -145,14 +145,14 @@ function sideTraining3_WATER_left_v2
 
         % set global counters for each of the possible input ports (AnalogIn1 ports 1-4). 
         % Arguments: (sma, CounterNumber, TargetEvent, Threshold)
-        sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, num_dryLicks+1); 
-        sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks+1);
-        sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 4);
-        sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 4);
+        sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, num_dryLicks); 
+        sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks);
+        sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 3);
+        sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 3);
 
         BpodSystem.Data.centerValve(trial) = center_port.left_valve;
         BpodSystem.Data.correctPort(trial) = correct_port.port;
-        BpodSystem.Data.rewardLick(trial) = num_dryLicks+1;
+        BpodSystem.Data.firstRewardLick(trial) = num_dryLicks;
 
         %% Adding States
         % First trial only: add experiment global timer
