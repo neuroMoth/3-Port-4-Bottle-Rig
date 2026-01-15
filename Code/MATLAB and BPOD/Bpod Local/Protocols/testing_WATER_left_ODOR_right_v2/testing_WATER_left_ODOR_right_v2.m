@@ -25,7 +25,7 @@ function testing_WATER_left_ODOR_right_v2
     BpodSystem.Data.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
-    BpodSystem.Data.firstRewardLick = zeros(expV.MAXIMUM_TRIALS, 1);
+    BpodSystem.Data.rewardLick = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.trialsEngaged = zeros(expV.MAXIMUM_TRIALS, 1);
 
     % Saving ExperimentVariables
@@ -152,7 +152,7 @@ function testing_WATER_left_ODOR_right_v2
 
         BpodSystem.Data.centerValve(trial) = center_port.left_valve;
         BpodSystem.Data.correctPort(trial) = correct_port.port;
-        BpodSystem.Data.firstRewardLick(trial) = num_dryLicks;
+        BpodSystem.Data.rewardLick(trial) = num_dryLicks+1;
 
         %% Adding States
         % First trial only: add experiment global timer

@@ -1,20 +1,19 @@
-function [center_lineup, rewardLickOrder, rewardDelays] = GenerateCenterLineup()
+function [firstTrial, water_lineup, odor_lineup, water_rewardLickOrder, odor_rewardLickOrder, water_rewardDelays, odor_rewardDelays] = GenerateCenterLineup_Alternation()
 %% --- Initialize random number generator ---
 rng("shuffle"); % Creates a new seed for each time to ensure independent values
 
 % --- Define parameters ---
 expV = ExperimentVariables;
-total_trials = expV.MAXIMUM_TRIALS;
+total_trials = expV.TOTAL_ALLOWED_TIME / 10; % FOR ALTERNATION: "total trials" variable is a function of total time.
 block_size = expV.TRIALS_PER_BLOCK;
-maxRepeats = expV.MAX_REPEATS;
 
 rewardLickRange = expV.REWARD_LICKS;
 rewardDelayRange = expV.REWARD_VALVE_DELAY;
 
-valveSet1 = expV.VALVE_SET1;
-valveSet2 = expV.VALVE_SET2;
+valveSet1 = expV.VALVE_SET1; % water valves
+valveSet2 = expV.VALVE_SET2; % odor valves
 
-num_blocks = total_trials / block_size; % = 8
+num_blocks = ceil(total_trials / block_size); % = 8
 n_v1 = numel(valveSet1); n_v2 = numel(valveSet2);
 n_lickRange = numel(rewardLickRange); % = 3
 n_rewardDelay = numel(rewardDelayRange); % = 3
@@ -23,51 +22,13 @@ n_rewardDelay = numel(rewardDelayRange); % = 3
 if n_v1 == 1; maxV1Rep = inf; else; maxV1Rep = 2; end
 if n_v2 == 1; maxV2Rep = inf; else; maxV2Rep = 2; end
 
-%% --- First: pseudorandom order generation for trial side order ---
-isValid = false; attempts = 0;
-while ~isValid
-    attempts = attempts + 1;
-    % Initialize an empty array to store the final side lineup
-    side_lineup = [];
+% FOR ALTERNATION: Randomize first trial
+firstTrial = randi(2) - 1; % 0 = water, 1 = odor
 
-    % --- Loop through each block to create the full lineup ---
-    for i = 1:num_blocks
-
-        % -- Apply the randomization logic to a SINGLE block of 20 --
-        side_num_reps = floor(block_size / 2);
-        isValidBlock = false;
-        while ~isValidBlock
-            % Correct side randomization
-            side_base_list = repmat([0,1], 1, side_num_reps); % 0 is Left, 1 is Right
-            side_shuffled_block = side_base_list(randperm(block_size)); % Shuffle the block
-
-            % Check validity of this block
-            if isValidSequence(side_shuffled_block, maxRepeats)
-                isValidBlock = true;
-            end
-        end
-        side_lineup = [side_lineup, side_shuffled_block];
-    end
-
-    % Check validity of whole session sequence
-    if isValidSequence(side_lineup, maxRepeats)
-        isValid = true; % Must pass for the whole session sequence for this sequence to be accepted
-    end
-
-    % Safety break
-    if attempts > 5000
-        error('Could not find a valid sequence after many attempts. Try loosening constraints.');
-    end
-end
-
-%% You can use these plots to check distribution of trial side repeats from this function
-% changeIdx = [find(diff(side_lineup) ~= 0), length(side_lineup)]; sideReps = diff([0, changeIdx]);
-% histogram(sideReps, 'Normalization','probability','Normalization','pdf','DisplayStyle','stairs','LineWidth',2);
-% keyboard
-
-%% --- Second: Shuffle center valves, reward lick #, and delay for each trial type ---
-center_lineup = []; rewardLickOrder = []; rewardDelays = [];
-blockStep = 1:block_size:total_trials;
+%% --- Shuffle center valves, reward lick #, and delay for each trial type ---
+water_lineup = []; odor_lineup = [];
+water_rewardLickOrder = []; odor_rewardLickOrder = [];
+water_rewardDelays = []; odor_rewardDelays = [];
 
 % --- Loop through each block to create the full lineup ---
 for j = 1:num_blocks
@@ -181,18 +142,13 @@ for j = 1:num_blocks
         end
     end
 
-    %% USE THE SIDE LINEUP GENERATED EARLIER TO CREATE THE FULL CENTER ORDER
-    valveBlock = zeros(1, block_size); lickBlock = valveBlock; delayBlock = lickBlock;
-    thisBlockSides = side_lineup(blockStep(j):(blockStep(j)+block_size-1));
-
-    valveBlock(thisBlockSides == 0) = v1_seq; valveBlock(thisBlockSides == 1) = v2_seq;
-    lickBlock(thisBlockSides == 0) = bestCombo1(:,2); lickBlock(thisBlockSides == 1) = bestCombo2(:,2);
-    delayBlock(thisBlockSides == 0) = bestCombo1(:,3); delayBlock(thisBlockSides == 1) = bestCombo2(:,3);
-
     % -- Append the newly shuffled block to our master list --
-    center_lineup = [center_lineup, valveBlock];
-    rewardLickOrder = [rewardLickOrder, lickBlock];
-    rewardDelays = [rewardDelays, delayBlock];
+    water_lineup = [water_lineup, v1_seq];
+    odor_lineup = [odor_lineup, v2_seq];
+    water_rewardLickOrder = [water_rewardLickOrder, bestCombo1(:,2)'];
+    odor_rewardLickOrder = [odor_rewardLickOrder, bestCombo2(:,2)'];
+    water_rewardDelays  = [water_rewardDelays, bestCombo1(:,3)'];
+    odor_rewardDelays  = [odor_rewardDelays, bestCombo2(:,3)'];
 end
 
 end

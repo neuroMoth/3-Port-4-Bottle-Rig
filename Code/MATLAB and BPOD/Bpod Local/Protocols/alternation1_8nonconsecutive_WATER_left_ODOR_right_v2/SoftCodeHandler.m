@@ -26,5 +26,11 @@ function SoftCodeHandler(Byte)
             % Report Correct
             BpodSystem.Data.correctTrials(BpodSystem.Status.trial) = 1;
             fprintf('-> %d correct. ',sum(BpodSystem.Data.correctTrials==1))
+            
+            % FOR ALTERNATION -> if # correct is a multiple of the # required to switch, then switch sides
+            numCorrect = sum(BpodSystem.Data.correctTrials(isnan(BpodSystem.Data.correctTrials)));
+            if (mod(numCorrect, expV.CORRECT_REQUIRED_TO_SWITCH) == 0)
+                BpodSystem.Status.switchStimulusFlag = true; 
+            end
     end
 end
