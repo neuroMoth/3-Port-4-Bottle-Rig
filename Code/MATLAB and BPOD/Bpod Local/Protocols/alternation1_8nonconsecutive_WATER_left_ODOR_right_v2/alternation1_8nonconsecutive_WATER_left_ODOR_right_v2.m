@@ -23,8 +23,8 @@ function alternation1_8nonconsecutive_WATER_left_ODOR_right_v2
     % FOR ALTERNATION: 
     BpodSystem.Status.switchStimulusFlag = false; % used to indicate when middle stimulus should switch
     BpodSystem.Status.currentTrialType = nan; % tracking current trial type (0 = water, 1 = odor)
-    BpodSystem.Status.iOdorTrial = 0; % for iterating odor trial variables
-    BpodSystem.Status.iWaterTrial = 0; % for iterating water trial variables
+    BpodSystem.Status.iOdorTrial = 1; % for iterating odor trial variables
+    BpodSystem.Status.iWaterTrial = 1; % for iterating water trial variables
 
     % Organizing what to save to data structure
     BpodSystem.Data.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
@@ -42,7 +42,7 @@ function alternation1_8nonconsecutive_WATER_left_ODOR_right_v2
     % Generating lineup for valve openings
     % FOR ALTERNATION trial variables assigned separately for odor and water trials
     [firstSide, waterValveLineup, odorValveLineup, waterRewardLick, odorRewardLick, waterDelay, odorDelay] = GenerateCenterLineup_Alternation();
-    BpodSystem.Status.currentTrialType = firstSide; % tracking current trial type (0 = water, 1 = odor)
+    BpodSystem.Status.currentTrialType = firstSide; trialType = []; % tracking current trial type (0 = water, 1 = odor)
 
     % configure the analog in. performed in configure_analog_in.m
     A = configure_analog_in();
@@ -114,8 +114,6 @@ function alternation1_8nonconsecutive_WATER_left_ODOR_right_v2
         S = BpodParameterGUI('sync', S); % Sync parameters with BpodParameterGUI plugin
         
         %% Get parameters for the current trial and save
-        BpodSystem.Status.trial  = trial;
-        fprintf('Trial %d: ', trial)
         
         % Check stimulus switch flag
         if (BpodSystem.Status.switchStimulusFlag)
@@ -123,13 +121,14 @@ function alternation1_8nonconsecutive_WATER_left_ODOR_right_v2
             if BpodSystem.Status.currentTrialType == 0; BpodSystem.Status.currentTrialType = 1; 
             else; BpodSystem.Status.currentTrialType = 0; 
             end
-            BpodSystem.Status.switchStimulusFlag = false; % reset the flag
+            fprintf('SWITCH STIMULUS: ')
+        elseif trial == 1; fprintf('FIRST STIMULUS: ')
         end
-        
+
         % Get trial parameters according to trial type
         if BpodSystem.Status.currentTrialType == 0 % WATER trial
-            waterTrial = BpodSystem.Status.iWaterTrial; 
-            
+            waterTrial = BpodSystem.Status.iWaterTrial; trialType = 'WATER';
+
             % Get center valve and number of dry licks for this trial
             center_stimulus_valve = waterValveLineup(waterTrial);
             num_dryLicks = waterRewardLick(waterTrial)-1;
@@ -137,7 +136,7 @@ function alternation1_8nonconsecutive_WATER_left_ODOR_right_v2
             
             BpodSystem.Status.iWaterTrial = waterTrial + 1; % iterate
         elseif BpodSystem.Status.currentTrialType == 1 % ODOR trial
-            odorTrial = BpodSystem.Status.iOdorTrial; 
+            odorTrial = BpodSystem.Status.iOdorTrial; trialType = 'ODOR';
             
             % Get center valve and number of dry licks for this trial
             center_stimulus_valve = odorValveLineup(odorTrial);
@@ -147,22 +146,29 @@ function alternation1_8nonconsecutive_WATER_left_ODOR_right_v2
             BpodSystem.Status.iOdorTrial = odorTrial + 1; % Iterate 
         end
 
-        % Set center valve and correct port 
+        % Set center and correct/incorrect valves
         center_port = center_port.setValve(1, center_stimulus_valve);
         correct_port = correct_port.setCorrect(port_1, port_3, center_stimulus_valve);
         incorrect_port = incorrect_port.setIncorrect(port_1, port_3, center_stimulus_valve);
+
+        % If stimuli switched (or first trial), print new lateral ports and reset flag
+        if (BpodSystem.Status.switchStimulusFlag) || trial == 1
+            fprintf('%s. Correct=port%d. Incorrect=port%d. \n',trialType,correct_port.port, incorrect_port.port);
+            BpodSystem.Status.switchStimulusFlag = false; % reset the flag
+        end
 
         % new trial *block*, reset consecutiveRatSkips - not relevant for alternation 
         if (mod(trial, (expV.TRIALS_PER_BLOCK + 1)) == 0)
             BpodSystem.Status.consecutiveRatSkips = 0;
         end
-
-        fprintf('Center=valve%d. %d dry licks. %dms valve delay. ',center_stimulus_valve, num_dryLicks, center_valveDelay*1000);
-        fprintf('Correct=port%d. ',correct_port.port); fprintf('Incorrect=port%d. ',incorrect_port.port);
         
+        BpodSystem.Status.trial  = trial;
         BpodSystem.Data.centerValve(trial) = center_port.left_valve;
         BpodSystem.Data.correctPort(trial) = correct_port.port;
         BpodSystem.Data.rewardLick(trial) = num_dryLicks+1;
+
+        fprintf('Trial %d: ', trial)
+        fprintf('Center=valve%d. %d dry licks. %dms valve delay. ',center_stimulus_valve, num_dryLicks, center_valveDelay*1000);
 
         %% Assemble the State Machine for this Trial
         sma = NewStateMachine();
@@ -245,7 +251,8 @@ function alternation1_8nonconsecutive_WATER_left_ODOR_right_v2
             'Timer', 0,...
             'StateChangeConditions', {correct_port.lick_counter_event, 'waitLateralRewardLick', incorrect_port.lick_counter_event, ...
             'reportIncorrect', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired, 'reportSkip'},...
-            'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN, 'GlobalTimerTrig', expV.LICK_WINDOW_TIMER_ID});
+            'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN, 'SoftCode', 3, ...
+            'GlobalTimerTrig', expV.LICK_WINDOW_TIMER_ID});
         sma = AddState(sma, 'Name', 'waitLateralRewardLick', ...
             'Timer', 0,...
             'StateChangeConditions', {correct_port.lick_event, 'openLateralReward', expV.experimentTimeExpired , 'cleanup'...
@@ -255,7 +262,7 @@ function alternation1_8nonconsecutive_WATER_left_ODOR_right_v2
             'Timer', correct_port.valve_time,...
             'StateChangeConditions', {'Tup', 'closeLateralReward'},...
             'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN, 'ValveModule1', ['O', correct_port.valve], ...
-            'GlobalTimerTrig', expV.STIM_WINDOW_TIMER_ID, 'SoftCode', 3});
+            'GlobalTimerTrig', expV.STIM_WINDOW_TIMER_ID});
         sma = AddState(sma, 'Name', 'closeLateralReward', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'waitRemainingLateralTime'},...
