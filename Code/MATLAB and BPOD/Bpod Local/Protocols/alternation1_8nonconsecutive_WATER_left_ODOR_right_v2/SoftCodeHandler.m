@@ -20,16 +20,16 @@ function SoftCodeHandler(Byte)
         case 14
             % Report Incorrect
             BpodSystem.Data.correctTrials(BpodSystem.Status.trial) = 0;
-            fprintf('-> %d incorrect. ',sum(BpodSystem.Data.correctTrials==0))
+            fprintf('-> %d total incorrect. ',sum(BpodSystem.Data.correctTrials==0))
             fprintf('Punish. %d sec. ',expV.PUNISHMENT_TIME)
         case 15 
             % Report Correct
             BpodSystem.Data.correctTrials(BpodSystem.Status.trial) = 1;
-            fprintf('-> %d correct. ',sum(BpodSystem.Data.correctTrials==1))
+            fprintf('-> %d total correct. ',sum(BpodSystem.Data.correctTrials==1))
             
             % FOR ALTERNATION -> if # correct is a multiple of the # required to switch, then switch sides
             BpodSystem.Status.numberNonconsecutiveCorrect = BpodSystem.Status.numberNonconsecutiveCorrect + 1;
-            fprintf('%d nonconsecutive correct trials. ', BpodSystem.Status.numberNonconsecutiveCorrect)
+            fprintf('%d nonconsecutive run. ', BpodSystem.Status.numberNonconsecutiveCorrect)
             if (mod(sum(BpodSystem.Data.correctTrials==1), expV.CORRECT_REQUIRED_TO_SWITCH) == 0)
                 BpodSystem.Status.switchStimulusFlag = true; 
             end
