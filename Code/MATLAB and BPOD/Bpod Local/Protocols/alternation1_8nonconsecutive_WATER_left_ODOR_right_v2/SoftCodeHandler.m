@@ -28,6 +28,8 @@ function SoftCodeHandler(Byte)
             fprintf('-> %d correct. ',sum(BpodSystem.Data.correctTrials==1))
             
             % FOR ALTERNATION -> if # correct is a multiple of the # required to switch, then switch sides
+            BpodSystem.Status.numberNonconsecutiveCorrect = BpodSystem.Status.numberNonconsecutiveCorrect + 1;
+            fprintf('%d nonconsecutive correct trials. ', BpodSystem.Status.numberNonconsecutiveCorrect)
             if (mod(sum(BpodSystem.Data.correctTrials==1), expV.CORRECT_REQUIRED_TO_SWITCH) == 0)
                 BpodSystem.Status.switchStimulusFlag = true; 
             end
