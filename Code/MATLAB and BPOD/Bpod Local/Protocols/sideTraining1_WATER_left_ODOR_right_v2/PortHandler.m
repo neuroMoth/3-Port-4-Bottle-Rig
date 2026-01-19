@@ -4,6 +4,7 @@ classdef PortHandler
         lick_event;
         lick_counter_id;
         lick_counter_event;
+        door; 
         
         valve;
         valve_time;
@@ -48,6 +49,7 @@ classdef PortHandler
                 obj.lick_event = port_instance.LICK_INPUT;
                 obj.lick_counter_id = port_instance.COUNTER_ID;
                 obj.lick_counter_event= port_instance.COUNTER_EVENT;
+                obj.door= port_instance.DOOR;
 
                 obj.valve = port_instance.VALVE;
                 time_variable_name = sprintf('open_time_%d', obj.valve);

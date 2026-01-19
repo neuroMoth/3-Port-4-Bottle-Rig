@@ -1,8 +1,8 @@
 % Original code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
 % V2 code edited/written by Timothy Vladimir Dong for Samuelsen Lab, Univeristy of Louisville----
 
-%% SIDE TRAINING 3 (Days 5&6) WATER LEFT PROTOCOL V2 | WATER LEFT (Port 1)| ODOR RIGHT (Port 3)
-function sideTraining3_WATER_left_v2
+%% SIDE TRAINING 3 PROTOCOL V2 | WATER LEFT (Port 1)| ODOR RIGHT (Port 3)
+function sideTraining3_WATER_left_ODOR_right_v2
     
     global BpodSystem % Imports the BpodSystem object to the function workspace
 
@@ -19,7 +19,13 @@ function sideTraining3_WATER_left_v2
     BpodSystem.Status.trial = 1;
     BpodSystem.Status.consecutiveRatSkips = 0;
     BpodSystem.Status.ExitTrialLoop = false; % session end 
-    BpodSystem.Status.switchStimulusFlag = false; % used to indicate when middle stimulus should switch (for alternation). 
+    
+    % FOR ALTERNATION: 
+    BpodSystem.Status.switchStimulusFlag = false; % used to indicate when middle stimulus should switch
+    BpodSystem.Status.currentTrialType = nan; % tracking current trial type (0 = water, 1 = odor)
+    BpodSystem.Status.numberNonconsecutiveCorrect = 0; 
+    BpodSystem.Status.iOdorTrial = 1; % for iterating odor trial variables
+    BpodSystem.Status.iWaterTrial = 1; % for iterating water trial variables
 
     % Organizing what to save to data structure
     BpodSystem.Data.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
@@ -34,9 +40,15 @@ function sideTraining3_WATER_left_v2
     expVarTable = cell2table(propValues,'RowNames', propNames, 'VariableNames', {'Value'}); % Convert to table
     BpodSystem.Data.experimentVariables = expVarTable; % Save table to structure
 
-    % Generating lineup and jitter for valve openings
-    [center_port_valve_lineup, reward_lick_lineup, center_delay_lineup] = GenerateCenterLineup();
-    BpodSystem.Data.centerValveDelay = center_delay_lineup; 
+    % Generating lineup for valve openings
+    % FOR SIDE TRAINING valve orders assigned separately for odor and water trials, but only use one
+    [waterValveLineup, odorValveLineup] = GenerateCenterLineup_SideTraining(); 
+    
+    % These values do not change for side training
+    BpodSystem.Status.currentTrialType = expV.SIDE_TRAINING_STIMULUS; % track current trial type (0 = water, 1 = odor)
+    trialType = []; 
+    num_dryLicks = expV.REWARD_LICKS-1;
+    center_valveDelay = expV.REWARD_VALVE_DELAY; 
 
     % configure the analog in. performed in configure_analog_in.m
     A = configure_analog_in();
@@ -47,8 +59,9 @@ function sideTraining3_WATER_left_v2
     W.loadWaveform(1, y); % Loads a sound as waveform 1
 
     %% LOAD ProtocolSettings
-    S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
-    if isempty(fieldnames(S)) % If /
+    % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
+    S = BpodSystem.ProtocolSettings; 
+    if isempty(fieldnames(S)) 
 
         subj = BpodSystem.GUIData.SubjectName;
         dir = 'C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\FakeSubject\Set_exp_parameters\Session Settings\DefaultSettings.mat';
@@ -82,14 +95,11 @@ function sideTraining3_WATER_left_v2
     totalValveWindow = ceil(mean(valveOpenTimes)/100)*100; % round up to nearest 100 ms to set stim window
     fullStimWindow = (totalValveWindow/1000) + expV.STIMULUS_WINDOW; % convert totalValve window to seconds
     BpodSystem.Data.fullStimulusWindow = fullStimWindow; 
-
-    % port_1 is the instance of the class Port1
-    port_1 = LateralPort(1);
-    % port_3 is the instance of the class Port3
-    port_3 = LateralPort(3);
-    % center_port the instance of the class center_port
-    center_port = CenterPort;
-    correct_port = PortHandler;
+    
+    port_1 = LateralPort(1); % port_1 is the instance of the class Port1
+    port_3 = LateralPort(3); % port_3 is the instance of the class Port3
+    center_port = CenterPort; % center_port the instance of the class center_port
+    correct_port = PortHandler; % PortHandler takes properties of whichever port is correct for that trial
     incorrect_port = PortHandler;
 
     BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
@@ -98,7 +108,7 @@ function sideTraining3_WATER_left_v2
     fprintf('Date and time: %s\n',datetime("now"))
     fprintf('Valve Durations: '); 
     for iValves=1:length(valveID); fprintf('%s=%.1fms. ',num2str(iValves),valveOpenTimes(iValves)); end
-    fprintf('\n')
+    fprintf('\nSTIMULUS: ')
 
     %% MAIN TRIAL LOOP
     % do MAXIMUM_TRIALS as defined in ExperimentVariables file if 60 minutes has not elapsed.
@@ -106,53 +116,58 @@ function sideTraining3_WATER_left_v2
         
         S = BpodParameterGUI('sync', S); % Sync parameters with BpodParameterGUI plugin
         
-        %% Get parameters for the current trial and save to variables
-        BpodSystem.Status.trial  = trial;
-        fprintf('Trial %d: ', trial)
+        %% Get parameters for the current trial and save
 
-        % Get center valve and number of dry licks for this trial
-        center_stimulus_valve = center_port_valve_lineup(trial); 
-        num_dryLicks = reward_lick_lineup(trial)-1;
-        center_valveDelay = center_delay_lineup(trial);
+        % Get trial parameters according to trial type
+        if BpodSystem.Status.currentTrialType == 0 % WATER trial
+            waterTrial = BpodSystem.Status.iWaterTrial; trialType = 'WATER';
+            % Get center valve for this trial
+            center_stimulus_valve = waterValveLineup(waterTrial);
+            BpodSystem.Status.iWaterTrial = waterTrial + 1; % iterate
+        elseif BpodSystem.Status.currentTrialType == 1 % ODOR trial
+            odorTrial = BpodSystem.Status.iOdorTrial; trialType = 'ODOR';
+            % Get center valve for this trial
+            center_stimulus_valve = odorValveLineup(odorTrial);
+            BpodSystem.Status.iOdorTrial = odorTrial + 1; % Iterate 
+        end
 
-        % Set center valve and correct port 
+        % Set center and correct/incorrect valves
         center_port = center_port.setValve(1, center_stimulus_valve);
         correct_port = correct_port.setCorrect(port_1, port_3, center_stimulus_valve);
         incorrect_port = incorrect_port.setIncorrect(port_1, port_3, center_stimulus_valve);
 
-        % new trial *block*, reset consecutiveRatSkips
+        % If stimuli switched (or first trial), print new lateral ports and reset flag
+        if trial == 1
+            fprintf('%s. Correct=port%d. Incorrect=port%d. \n',trialType,correct_port.port, incorrect_port.port);
+        end
+
+        % new trial *block*, reset consecutiveRatSkips - not relevant for alternation 
         if (mod(trial, (expV.TRIALS_PER_BLOCK + 1)) == 0)
             BpodSystem.Status.consecutiveRatSkips = 0;
         end
-        % evaluate if minimum trial number is reached, and if 10 consecutive traials have been skipped
-        % if (expV.MINIMUM_TRIALS) 
-        %     if(BpodSystem.Status.consecutiveRatSkips >= expV.SKIPPED_TRIALS_THRESHOLD)
-        %         stop_experiment(A, W);
-        %         return
-        %     end
-        % end
+        
+        BpodSystem.Status.trial  = trial;
+        BpodSystem.Data.centerValve(trial) = center_port.left_valve;
+        BpodSystem.Data.correctPort(trial) = correct_port.port;
+        BpodSystem.Data.rewardLick(trial) = num_dryLicks+1;
 
+        fprintf('Trial %d: ', trial)
         fprintf('Center=valve%d. %d dry licks. %dms valve delay. ',center_stimulus_valve, num_dryLicks, center_valveDelay*1000);
-        fprintf('Correct=port%d. ',correct_port.port); fprintf('Incorrect=port%d. ',incorrect_port.port);
 
         %% Assemble the State Machine for this Trial
         sma = NewStateMachine();
 
         % set global timers for the maximum duration of the experiment and the maximum sample time of 2 seconds.
         sma = SetGlobalTimer(sma, 'TimerID', expV.EXPERIMENT_TIMER_ID, 'Duration', expV.TOTAL_ALLOWED_TIME);
-        sma = SetGlobalTimer(sma, 'TimerID', expV.LICK_WINDOW_TIMER_ID, 'Duration', expV.LICK_WINDOW); % 2 seconds to get all dry licks
-        sma = SetGlobalTimer(sma, 'TimerID', expV.STIM_WINDOW_TIMER_ID, 'Duration', fullStimWindow); % Max time after valve opens before door goes up
+        sma = SetGlobalTimer(sma, 'TimerID', expV.LICK_WINDOW_TIMER_ID, 'Duration', expV.LICK_WINDOW); % time to do all dry licks
+        sma = SetGlobalTimer(sma, 'TimerID', expV.STIM_WINDOW_TIMER_ID, 'Duration', fullStimWindow); % time after valve opens before door goes up
 
         % set global counters for each of the possible input ports (AnalogIn1 ports 1-4). 
         % Arguments: (sma, CounterNumber, TargetEvent, Threshold)
         sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, num_dryLicks); 
-        sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks);
-        sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 3);
-        sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 3);
-
-        BpodSystem.Data.centerValve(trial) = center_port.left_valve;
-        BpodSystem.Data.correctPort(trial) = correct_port.port;
-        BpodSystem.Data.rewardLick(trial) = num_dryLicks+1;
+        %sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks);
+        sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 3); % Left Port licks
+        sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 3); % Right Port licks
 
         %% Adding States
         % First trial only: add experiment global timer
@@ -215,35 +230,35 @@ function sideTraining3_WATER_left_v2
             'Timer', expV.TTC_LATERAL_TIME,...
             'StateChangeConditions', {'Tup', 'reportSkip', correct_port.lick_event, 'waitLateralDryLicks', incorrect_port.lick_event,...
             'waitLateralDryLicks' expV.experimentTimeExpired , 'cleanup'},...
-            'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN, 'GlobalCounterReset', port_1.COUNTER_ID});
+            'OutputActions',{correct_port.door, expV.DOWN, 'GlobalCounterReset', port_1.COUNTER_ID});
         sma = AddState(sma, 'Name', 'waitLateralDryLicks', ...
             'Timer', 0,...
             'StateChangeConditions', {correct_port.lick_counter_event, 'waitLateralRewardLick', incorrect_port.lick_counter_event, ...
             'waitFinalIncorrectLick', expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired, 'reportSkip'},...
-            'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN, 'GlobalTimerTrig', expV.LICK_WINDOW_TIMER_ID});
+            'OutputActions',{correct_port.door, expV.DOWN, 'SoftCode', 3,'GlobalTimerTrig', expV.LICK_WINDOW_TIMER_ID});
         sma = AddState(sma, 'Name', 'waitLateralRewardLick', ...
             'Timer', 0,...
             'StateChangeConditions', {correct_port.lick_event, 'openLateralReward', expV.experimentTimeExpired , 'cleanup'...
             expV.lickTimeExpired, 'reportSkip'},...
-            'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN});
+            'OutputActions',{correct_port.door, expV.DOWN});
         sma = AddState(sma, 'Name', 'openLateralReward', ...
             'Timer', correct_port.valve_time,...
             'StateChangeConditions', {'Tup', 'closeLateralReward'},...
-            'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN, 'ValveModule1', ['O', correct_port.valve], ...
-            'GlobalTimerTrig', expV.STIM_WINDOW_TIMER_ID, 'SoftCode', 3});
+            'OutputActions',{correct_port.door, expV.DOWN, 'ValveModule1', ['O', correct_port.valve], ...
+            'GlobalTimerTrig', expV.STIM_WINDOW_TIMER_ID});
         sma = AddState(sma, 'Name', 'closeLateralReward', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'waitRemainingLateralTime'},...
-            'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN, 'ValveModule1', ['C', correct_port.valve]});
+            'OutputActions',{correct_port.door, expV.DOWN, 'ValveModule1', ['C', correct_port.valve]});
         sma = AddState(sma, 'Name', 'waitRemainingLateralTime', ...
             'Timer', 0,...
             'StateChangeConditions', {expV.stimTimeExpired, 'ITI_end', expV.lickTimeExpired, 'ITI_end'},...
-            'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN});
+            'OutputActions',{correct_port.door, expV.DOWN});
         sma = AddState(sma, 'Name', 'waitFinalIncorrectLick', ...
             'Timer', 0,...
             'StateChangeConditions', {incorrect_port.lick_event, 'reportIncorrect', ...
             expV.experimentTimeExpired , 'cleanup', expV.lickTimeExpired, 'reportSkip'},...
-            'OutputActions',{port_1.DOOR, expV.DOWN, port_3.DOOR, expV.DOWN});
+            'OutputActions',{correct_port.door, expV.DOWN});
         sma = AddState(sma, 'Name', 'reportIncorrect', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'ITI_punish'},...
@@ -255,11 +270,11 @@ function sideTraining3_WATER_left_v2
         sma = AddState(sma, 'Name', 'ITI_end', ...
             'Timer', 3,...
             'StateChangeConditions', {'Tup', 'resetCorrectCounter'},...
-            'OutputActions',{port_1.DOOR, expV.UP, port_3.DOOR, expV.UP, 'SoftCode', 15});
+            'OutputActions',{correct_port.door, expV.UP, 'SoftCode', 15});
         sma = AddState(sma, 'Name', 'ITI_punish', ...
             'Timer', (expV.PUNISHMENT_TIME+3),...
             'StateChangeConditions', {'Tup', 'resetCorrectCounter'},...
-            'OutputActions',{port_1.DOOR, expV.UP, port_3.DOOR, expV.UP});
+            'OutputActions',{correct_port.door, expV.UP});
         
         %%%%% TRIAL END - reset counters %%%%%
         sma = AddState(sma, 'Name', 'resetCorrectCounter', ...
