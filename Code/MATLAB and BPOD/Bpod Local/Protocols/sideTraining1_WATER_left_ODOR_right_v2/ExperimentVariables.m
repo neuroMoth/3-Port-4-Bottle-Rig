@@ -4,16 +4,16 @@ classdef ExperimentVariables
         ITI_TIME = 5; %seconds 
         PUNISHMENT_TIME = 0; %seconds
         TTC_CENTER_TIME = 30; %seconds
-        TTC_LATERAL_TIME = 30; %seconds
+        TTC_LATERAL_TIME = 60; %seconds
         LICK_WINDOW = 2; %seconds | Defines amount of seconds rat has to complete required amount of licks.
-        DELAY_TIME = 3; %seconds | delay from closing the center door to opening the lateral door
+        DELAY_TIME = 0; %seconds | delay from closing the center door to opening the lateral door
         STIMULUS_WINDOW = 300/1000; %ms after valve closes before door goes up (if still within LICK_WINDOW)
 
         VALVE_SET1 = [2, 3, 4]; %Water valves
         VALVE_SET2 = [5, 6, 7]; %Odor valves
         
-        REWARD_LICKS = [4]; %range of possible rewarded lick to be pseudorandomized per valve (+1 from # of dry licks)
-        REWARD_VALVE_DELAY = [25/1000]; %delay from lick detection to valve opening
+        REWARD_LICKS = [2]; %range of possible rewarded lick to be pseudorandomized per valve (+1 from # of dry licks)
+        REWARD_VALVE_DELAY = [10/1000]; %delay from lick detection to valve opening
  
         MAXIMUM_TRIALS = 200; 
         MINIMUM_TRIALS = 160; 
