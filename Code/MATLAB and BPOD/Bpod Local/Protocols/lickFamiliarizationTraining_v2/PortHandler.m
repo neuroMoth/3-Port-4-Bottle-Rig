@@ -1,10 +1,9 @@
 classdef PortHandler
     properties 
         port;
-        lick_event;
+        lick_input;
         lick_counter_id;
         lick_counter_event;
-        lick_input; 
         door; 
         
         valve;
@@ -52,13 +51,11 @@ classdef PortHandler
                 obj.port = port_number;
 
                 if port_number == 1 || port_number == 3 % lateral port
-                    obj.lick_event = port_instance.LICK_INPUT;
                     obj.lick_counter_id = port_instance.COUNTER_ID;
                     obj.lick_counter_event= port_instance.COUNTER_EVENT;
                     obj.lick_input = port_instance.LICK_INPUT;
                     obj.valve = port_instance.VALVE; 
                 elseif port_number == 2 % center port
-                    obj.lick_event = port_instance.LEFT_LICK_INPUT;
                     obj.lick_counter_id = port_instance.LEFT_COUNTER_ID;
                     obj.lick_counter_event= port_instance.LEFT_COUNTER_EVENT;
                     obj.lick_input = port_instance.LEFT_LICK_INPUT;

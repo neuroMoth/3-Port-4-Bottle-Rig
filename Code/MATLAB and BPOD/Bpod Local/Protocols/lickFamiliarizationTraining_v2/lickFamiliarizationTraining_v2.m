@@ -93,15 +93,14 @@ valveOpenTimes = [BpodSystem.ProtocolSettings.GUI.open_time_1; BpodSystem.Protoc
     BpodSystem.ProtocolSettings.GUI.open_time_7; BpodSystem.ProtocolSettings.GUI.open_time_8];
 BpodSystem.Data.valveOpenTimes = table(valveID,valveOpenTimes); % This time is in ms
 
-totalValveWindow = ceil(mean(valveOpenTimes)/100)*100; % round up to nearest 100 ms to set stim window
-fullStimWindow = (totalValveWindow/1000) + expV.STIMULUS_WINDOW; % convert totalValve window to seconds
-BpodSystem.Data.fullStimulusWindow = fullStimWindow;
+center_stimulus_valve = expV.VALVE_SET1(1);
 
 port_1 = LateralPort(1); % port_1 is the instance of the class Port1
 port_3 = LateralPort(3); % port_3 is the instance of the class Port3
 center_port = CenterPort; % center_port the instance of the class center_port
 
 thisPort = PortHandler; % PortHandler takes properties of current port
+thisValve = nan;
 
 BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
@@ -119,11 +118,12 @@ S = BpodParameterGUI('sync', S); % Sync parameters with BpodParameterGUI plugin
 % Get trial parameters according to trial type
 if portSession == 1 % Left port
     thisPort = thisPort.setPort(portSession, port_1);
+    thisValve = 1; 
 elseif portSession == 2 % Center port
-    center_stimulus_valve = expV.VALVE_SET1(1);
     % Set center valve
     center_port = center_port.setValve(1, center_stimulus_valve);
     thisPort = thisPort.setPort(portSession, center_port); 
+    thisValve = center_stimulus_valve; 
     
     % waterTrial = BpodSystem.Status.iWaterTrial;
     % % Get center valve for this trial
@@ -134,10 +134,11 @@ elseif portSession == 2 % Center port
     % BpodSystem.Status.iWaterTrial = waterTrial + 1; % iterate
 elseif portSession == 3 % Right port
     thisPort = thisPort.setPort(portSession, port_3);
+    thisValve = 8; 
 else; error('Port selection error. ');
 end
 
-fprintf('Center=valve%d. %d dry licks. %dms valve delay. ',center_stimulus_valve, num_dryLicks, center_valveDelay*1000);
+fprintf('Port%d. Valve%d. %d dry licks. %dms valve delay. ', portSession, thisValve, num_dryLicks, center_valveDelay*1000);
 
 %% Assemble the State Machine
 sma = NewStateMachine();
@@ -178,7 +179,7 @@ sma = AddState(sma, 'Name', 'closeFirstReward', ...
 %%%%% Main Lick Loop %%%%%
 sma = AddState(sma, 'Name', 'waitDryLicks', ...
     'Timer', 0,...
-    'StateChangeConditions', {thisPort.lick_event, 'waitRewardLick', expV.experimentTimeExpired, 'cleanup'},...
+    'StateChangeConditions', {thisPort.lick_counter_event, 'waitRewardLick', expV.experimentTimeExpired, 'cleanup'},...
     'OutputActions',{thisPort.door, expV.DOWN});
 sma = AddState(sma, 'Name', 'waitRewardLick', ...
     'Timer', 0,...
@@ -198,7 +199,7 @@ sma = AddState(sma, 'Name', 'closeReward', ...
 sma = AddState(sma, 'Name', 'cleanup', ...
     'Timer', 0,...
     'StateChangeConditions', {'Tup', 'exit'},...
-    'OutputActions',{port_1.DOOR, expV.UP, port_3.DOOR, expV.UP, 'ValveModule1', ['B' 00000000], 'SoftCode', 1});
+    'OutputActions',{thisPort.door, expV.UP, 'ValveModule1', ['B' 00000000], 'SoftCode', 1});
 
 % function will check if softcode '1' has been sent by the state machine in cleanup state.
 % if it has, it is time to exit the trial loop (end of session).
@@ -220,7 +221,7 @@ fprintf('\n')
 
 if (BpodSystem.Status.ExitTrialLoop || BpodSystem.Status.BeingUsed == 0 || trial == expV.MAXIMUM_TRIALS)
     stop_experiment(A, W);
-    sessionSummary();
+    %sessionSummary();
     return
 end
 end
