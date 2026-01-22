@@ -16,16 +16,16 @@ classdef PortHandler
             % conditionCode is either WLOR or WROL
             if strcmp(conditionCode, 'WLOR')
                 switch center_valve
-                    case {waterValves}
+                    case num2cell(waterValves)
                         obj = obj.setProperties(1, port_1_inst); % correct is port 1 (left)
-                    case {odorValves}
+                    case num2cell(odorValves)
                         obj = obj.setProperties(3, port_3_inst);
                 end
             elseif strcmp(conditionCode, 'WROL')
                 switch center_valve
-                    case {waterValves}
+                    case num2cell(waterValves)
                         obj = obj.setProperties(3, port_3_inst); % correct is port 3 (right)
-                    case {odorValves}
+                    case num2cell(odorValves)
                         obj = obj.setProperties(1, port_1_inst);
                 end
             end
@@ -34,16 +34,16 @@ classdef PortHandler
             % conditionCode is either WLOR or WROL
             if strcmp(conditionCode, 'WROL')
                 switch center_valve
-                    case {waterValves}
+                    case num2cell(waterValves)
                         obj = obj.setProperties(1, port_1_inst); % incorrect is port 1 (left)
-                    case {odorValves}
+                    case num2cell(odorValves)
                         obj = obj.setProperties(3, port_3_inst);
                 end
             elseif strcmp(conditionCode, 'WLOR')
                 switch center_valve
-                    case {waterValves}
+                    case num2cell(waterValves)
                         obj = obj.setProperties(3, port_3_inst); % incorrect is port 3 (right)
-                    case {odorValves}
+                    case num2cell(odorValves)
                         obj = obj.setProperties(1, port_1_inst);
                 end
             end
