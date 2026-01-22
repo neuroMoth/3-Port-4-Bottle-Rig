@@ -13,37 +13,43 @@ classdef PortHandler
     end
     methods
         function obj = setCorrect(obj, port_1_inst, port_3_inst, center_valve, waterValves, odorValves, conditionCode)
+            waterValveSet = num2cell(waterValves); 
+            odorValveSet = num2cell(odorValves);
+            
             % conditionCode is either WLOR or WROL
             if strcmp(conditionCode, 'WLOR')
                 switch center_valve
-                    case num2cell(waterValves)
+                    case waterValveSet
                         obj = obj.setProperties(1, port_1_inst); % correct is port 1 (left)
-                    case num2cell(odorValves)
+                    case odorValveSet
                         obj = obj.setProperties(3, port_3_inst);
                 end
             elseif strcmp(conditionCode, 'WROL')
                 switch center_valve
-                    case num2cell(waterValves)
+                    case waterValveSet
                         obj = obj.setProperties(3, port_3_inst); % correct is port 3 (right)
-                    case num2cell(odorValves)
+                    case odorValveSet
                         obj = obj.setProperties(1, port_1_inst);
                 end
             end
         end
         function obj = setIncorrect(obj, port_1_inst, port_3_inst, center_valve, waterValves, odorValves, conditionCode)
+            waterValveSet = num2cell(waterValves); 
+            odorValveSet = num2cell(odorValves);
+            
             % conditionCode is either WLOR or WROL
             if strcmp(conditionCode, 'WROL')
                 switch center_valve
-                    case num2cell(waterValves)
+                    case waterValveSet
                         obj = obj.setProperties(1, port_1_inst); % incorrect is port 1 (left)
-                    case num2cell(odorValves)
+                    case odorValveSet
                         obj = obj.setProperties(3, port_3_inst);
                 end
             elseif strcmp(conditionCode, 'WLOR')
                 switch center_valve
-                    case num2cell(waterValves)
+                    case waterValveSet
                         obj = obj.setProperties(3, port_3_inst); % incorrect is port 3 (right)
-                    case num2cell(odorValves)
+                    case odorValveSet
                         obj = obj.setProperties(1, port_1_inst);
                 end
             end
