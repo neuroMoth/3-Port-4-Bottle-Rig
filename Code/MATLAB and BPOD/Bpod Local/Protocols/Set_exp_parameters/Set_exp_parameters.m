@@ -2,36 +2,21 @@
 %% Additional edits for Samuelsen Lab by Timothy Vladimir Dong 12/8/25
 % This code is called from the BPod Console to setup the parameters for 3 port ... experiment
 
-%% Note from TVD: 
+%% Note from TVD:
 % If you want to change the default_protocol_settings you need to manually
 % delete the cached file for default settings under 'FakeSubject,' or else
-% the protocol will still load the old values. 
+% the protocol will still load the old values.
+
+global BpodSystem
+subj = BpodSystem.GUIData.SubjectName;
 
 % get the filename of the default settings so we can delete it and avoid
-% using cached file instead of the one we are making now 
-f = fullfile('C:\','Users','Chad Samuelsen','Documents','Github','Bpod Local','Data','FakeSubject','Set_param_Ortho_Set_1','Session Settings', 'DefaultSettings.mat');
+% using cached file instead of the one we are making now
+f = fullfile('C:\','Users','Chad Samuelsen','Documents','Github','Bpod Local','Data',subj,'Set_exp_parameters','Session Settings', 'DefaultSettings.mat');
 
 if exist(f, 'file')
     delete(f);
 end
-
-global BpodSystem
-
-function start_oscilliscope(analog_object)
-% function to start the oscilliscope
-    analog_object.scope; % Launch Scope GUI
-    analog_object.scope_StartStop % Start USB streaming + data logging
-end
-
-function shutdown_protocol(analog_input)
-% function used to shutdown open processes before terminating the protocol after the user hits the stop button.
-% this is important to avoid closing the software without releasing the ports in use to be used again.
-    analog_input.scope_StartStop; % Stop Oscope GUI
-    analog_input.endAcq; % Close Oscope GUI
-    analog_input.stopReportingEvents; % Stop sending events to state machine
-    clear analog_input;
-end
-
 
 %% Session Setup
 % Assert Analog Input module is present + USB-paired (via USB button on console GUI)
@@ -54,49 +39,52 @@ end
 %start_oscilliscope(A);
 %%--- Define parameters and trial structure
 
-
 S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
 
 % create an empty list of ValveDetails objects (will overwrite later)
-valves = ValveDetails.empty(); 
+valves = ValveDetails.empty();
 for i = 1:Set_param_constants.NUM_VALVES
     new_valve = ValveDetails(i, 30, 50);
     valves(end +1) = new_valve;
 end
 
-% set protocol defaults if not yet set. this generates the gui for the program and 
-% sets up field to enter for protocol. 
+% set protocol defaults if not yet set. this generates the gui for the program and
+% sets up field to enter for protocol.
 if isempty(fieldnames(S))  % If settings file was an empty struct, populate struct with default settings
     S = default_protocol_settings(S,valves);
     BpodSystem.ProtocolSettings = S;
 end
 
 % Get actual valve open times
-valves = ValveDetails.empty(); 
-targetAmounts = str2double(S.GUIMeta.select_amount_liquid_ul.String); 
+valves = ValveDetails.empty();
 for i = 1:Set_param_constants.NUM_VALVES
-    valve_open_time_def = GetValveTimes(targetAmounts(S.GUI.select_amount_liquid_ul),i); 
-    new_valve = ValveDetails(i, targetAmounts(S.GUI.select_amount_liquid_ul), valve_open_time_def);
+    variable_name =  sprintf('select_amount_valve%d', i);
+    targetAmounts = str2double(S.GUIMeta.(variable_name).String);
+
+    valve_open_time_def = GetValveTimes(targetAmounts(S.GUI.(variable_name)),i);
+    new_valve = ValveDetails(i, targetAmounts(S.GUI.(variable_name)), valve_open_time_def);
 
     valves(end +1) = new_valve;
 end
 
+keyboard
+
 % Initialize parameter GUI plugin with gui returned from default_protocol_settings
-BpodParameterGUI('init', S); 
+BpodParameterGUI('init', S);
 
 %% BEGIN REPEATING STATE MACHINE -- LAST 10 MINUTES -- CONTINUOUSLY SAVES SETTINGS
 for i = 1:Set_param_constants.NUM_SECONDS
 
-    S = BpodParameterGUI('sync', S); 
+    S = BpodParameterGUI('sync', S);
 
     sma = NewStateMachine();
 
     sma = SetGlobalTimer(sma, 'TimerID', 1, 'Duration', 1000);
 
     sma = AddState(sma, 'Name', 'Check_Parameters', ...
-        'Timer',3,...
+        'Timer',1,...
         'StateChangeConditions', {'Tup', '>exit'},...
-        'OutputActions', {'GlobalTimerTrig', 1}); 
+        'OutputActions', {'GlobalTimerTrig', 1});
 
     % Send description to the Bpod State Machine device
     SendStateMachine(sma);
@@ -110,23 +98,33 @@ for i = 1:Set_param_constants.NUM_SECONDS
         %     % dynamically gets the number of the odor based on i.
         %     id = v;
         %     valve_line_number = sprintf('valve_line_%d', id);
-        % 
+        %
         %     stimulus_id_field = sprintf('stimulus_ID_%d', id);
-        % 
+        %
         %     % fill in dynamically generated variable name to get the value
         %     S.GUI.(stimulus_id_field) = S.GUIMeta.(valve_line_number).String{S.GUI.(valve_line_number)};
         % end
 
+        % Recalculate valve open times
+        valves = ValveDetails.empty();
+        for i = 1:Set_param_constants.NUM_VALVES
+            variable_name =  sprintf('select_amount_valve%d', i);
+            targetAmounts = str2double(S.GUIMeta.(variable_name).String);
+
+            valve_open_time_def = GetValveTimes(targetAmounts(S.GUI.(variable_name)),i);
+            new_valve = ValveDetails(i, targetAmounts(S.GUI.(variable_name)), valve_open_time_def);
+
+            valves(end +1) = new_valve;
+        end
+
         if S.GUI.calibration_or_clean == 1
-            S = set_valve_open_values(S, valves, 'calibrated');   
+            S = set_valve_open_values(S, valves, 'calibrated');
         else
-            S = set_valve_open_values(S, valves ,'user');   
+            S = set_valve_open_values(S, valves ,'user');
         end
 
         % sync parameters to gui inputs
         S = BpodParameterGUI('sync', S);
-
-        % S.stimuli_sequence = gen_stimuli_sequence(BpodSystem);
 
         BpodSystem.ProtocolSettings = S;
 
@@ -142,3 +140,19 @@ for i = 1:Set_param_constants.NUM_SECONDS
     end
 end
 %% END STATE MACHINE
+
+function start_oscilliscope(analog_object)
+% function to start the oscilliscope
+analog_object.scope; % Launch Scope GUI
+analog_object.scope_StartStop % Start USB streaming + data logging
+end
+
+function shutdown_protocol(analog_input)
+% function used to shutdown open processes before terminating the protocol after the user hits the stop button.
+% this is important to avoid closing the software without releasing the ports in use to be used again.
+analog_input.scope_StartStop; % Stop Oscope GUI
+analog_input.endAcq; % Close Oscope GUI
+analog_input.stopReportingEvents; % Stop sending events to state machine
+clear analog_input;
+end
+
