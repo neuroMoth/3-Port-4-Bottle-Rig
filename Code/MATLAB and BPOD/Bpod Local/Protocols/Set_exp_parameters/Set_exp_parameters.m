@@ -67,8 +67,6 @@ for i = 1:Set_param_constants.NUM_VALVES
     valves(end +1) = new_valve;
 end
 
-keyboard
-
 % Initialize parameter GUI plugin with gui returned from default_protocol_settings
 BpodParameterGUI('init', S);
 

@@ -71,7 +71,25 @@ function testing_WATER_right_ODOR_left_v2
         BpodSystem.ProtocolSettings = S;
     end
 
-    % Save valve open times
+    % UPDATE valve open times 
+    S = update_valve_open_times(S, [1, expV.VALVE_SET1, expV.VALVE_SET2, 8]);
+    % Save protocol settings (after updating valve timings)
+    BpodSystem.ProtocolSettings = S;
+    SaveProtocolSettings(BpodSystem.ProtocolSettings)
+    
+    BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
+    
+    %% Generate port instances
+    % port_1 is the instance of the class Port1
+    port_1 = LateralPort(1);
+    % port_3 is the instance of the class Port3
+    port_3 = LateralPort(3);
+    % center_port the instance of the class center_port
+    center_port = CenterPort;
+    correct_port = PortHandler;
+    incorrect_port = PortHandler;
+    
+    % save valve open times to session data
     valveID = ["Valve1"; "Valve2"; "Valve3"; "Valve4"; "Valve5"; "Valve6"; "Valve7"; "Valve8"];
     valveOpenTimes = [BpodSystem.ProtocolSettings.GUI.open_time_1; BpodSystem.ProtocolSettings.GUI.open_time_2; ...
         BpodSystem.ProtocolSettings.GUI.open_time_3; BpodSystem.ProtocolSettings.GUI.open_time_4; ...
@@ -82,17 +100,6 @@ function testing_WATER_right_ODOR_left_v2
     totalValveWindow = ceil(mean(valveOpenTimes)/100)*100; % round up to nearest 100 ms to set stim window
     fullStimWindow = (totalValveWindow/1000) + expV.STIMULUS_WINDOW; % convert totalValve window to seconds
     BpodSystem.Data.fullStimulusWindow = fullStimWindow; 
-
-    % port_1 is the instance of the class Port1
-    port_1 = LateralPort(1);
-    % port_3 is the instance of the class Port3
-    port_3 = LateralPort(3);
-    % center_port the instance of the class center_port
-    center_port = CenterPort;
-    correct_port = PortHandler;
-    incorrect_port = PortHandler;
-
-    BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
     % Print to command window the start of the Session
     fprintf('Date and time: %s\n',datetime("now"))

@@ -21,7 +21,7 @@ function settings_struct = set_valve_open_values(settings_struct, valves, type_d
     global BpodSystem   % get global BpodSystem object
 
     for i = 1:Set_param_constants.NUM_VALVES
-        valve = i;
+        %valve = i;
         
         valve = valves(i);
 
