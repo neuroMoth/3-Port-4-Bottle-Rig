@@ -48,25 +48,12 @@ function testing_WATER_right_ODOR_left_v2
 
     %% LOAD ProtocolSettings
     S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
-    if isempty(fieldnames(S)) % If /
+    if isempty(fieldnames(S)) % If running this protocol for the first time with this subject
         subj = BpodSystem.GUIData.SubjectName;
         dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\',subj,'\Set_exp_parameters\Session Settings\DefaultSettings.mat'];
         temp = load(dir);
         S = temp.ProtocolSettings; clear temp;
-
-        % init an empty cell array to hold names of gui fields to remove
-        fields = {};
-        % remove ability to rename valve stimuli
-        for i = 1:8
-            fieldname = sprintf('valve_line_%d', i);
-            fields{end+1} = fieldname;
-            fieldname = sprintf('Valve_%d', i);
-            fields{end+1} = fieldname;
-        end
-
-        S.GUIMeta = rmfield(S.GUIMeta, fields); % Using a cell array
-        S.GUI = rmfield(S.GUI, fields);
-        S.GUIPanels = rmfield(S.GUIPanels, {'Current_valve_assignments'});
+        
         BpodSystem.ProtocolSettings = S;
     end
 
@@ -77,6 +64,8 @@ function testing_WATER_right_ODOR_left_v2
     SaveProtocolSettings(BpodSystem.ProtocolSettings)
     
     BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
+
+    %conditions = S.GUIMeta.CONDITION_CODE.String;
     
     %% Generate port instances
     % port_1 is the instance of the class Port1

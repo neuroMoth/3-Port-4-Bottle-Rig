@@ -71,7 +71,7 @@ end
 BpodParameterGUI('init', S);
 
 %% BEGIN REPEATING STATE MACHINE -- LAST 10 MINUTES -- CONTINUOUSLY SAVES SETTINGS
-for i = 1:Set_param_constants.NUM_SECONDS
+for isec = 1:Set_param_constants.NUM_SECONDS
 
     S = BpodParameterGUI('sync', S);
 
@@ -121,13 +121,16 @@ for i = 1:Set_param_constants.NUM_SECONDS
             S = set_valve_open_values(S, valves ,'user');
         end
 
+        % CHECK WHETHER A CONDITION HAS BEEN SELECTED
+        S = set_Condition(S);
+
         % sync parameters to gui inputs
         S = BpodParameterGUI('sync', S);
 
         BpodSystem.ProtocolSettings = S;
 
         SaveProtocolSettings(BpodSystem.ProtocolSettings)
-        disp(['Setting data are continously saved! You still have ' num2str((Set_param_constants.NUM_SECONDS-i)/Set_param_constants.MINUTES_PER_HOUR) 'minutes to finish setting the parameters']);
+        disp(['Setting data are continously saved! You still have ' num2str((Set_param_constants.NUM_SECONDS-isec)/Set_param_constants.MINUTES_PER_HOUR) 'minutes to finish setting the parameters']);
     end
     % Exit the session if the user has pressed the end button
     if BpodSystem.Status.BeingUsed == 0
@@ -138,12 +141,12 @@ for i = 1:Set_param_constants.NUM_SECONDS
     end
 end
 %% END STATE MACHINE
-
-function start_oscilliscope(analog_object)
-% function to start the oscilliscope
-analog_object.scope; % Launch Scope GUI
-analog_object.scope_StartStop % Start USB streaming + data logging
-end
+% 
+% function start_oscilliscope(analog_object)
+% % function to start the oscilliscope
+% analog_object.scope; % Launch Scope GUI
+% analog_object.scope_StartStop % Start USB streaming + data logging
+% end
 
 function shutdown_protocol(analog_input)
 % function used to shutdown open processes before terminating the protocol after the user hits the stop button.

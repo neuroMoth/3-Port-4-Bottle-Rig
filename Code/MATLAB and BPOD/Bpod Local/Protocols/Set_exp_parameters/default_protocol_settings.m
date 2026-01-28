@@ -4,6 +4,12 @@ function protocol_settings = default_protocol_settings(protocol_settings, valves
 
 %valve_labels = {'1','2','3','4','5', '6', '7', '8'};
 
+condition_values = {'none','WLOR','WROL'};
+protocol_settings = create_popup_menu(protocol_settings, "CONDITION_CODE", 1, condition_values);
+
+calibration_or_manual_values = {'Use Calibration Values', 'Manually Set Opening Times'};
+protocol_settings = create_popup_menu(protocol_settings, "calibration_or_clean", 1, calibration_or_manual_values);
+
 %%% START LIQUID AMOUNTS PANEL %%%
 liquid_amount_options = {'1','5','10','15','20','25','30','35','40','50'};
 
@@ -22,9 +28,6 @@ end
 %default_liquid_index = find(cellfun(@(x) strcmp(x,'10'), liquid_amount_options));
 %protocol_settings = create_popup_menu(protocol_settings, "select_taste_valve", 1, valve_labels);
 %protocol_settings = create_popup_menu(protocol_settings, "select_amount_liquid_ul", 7, liquid_amount_options);
-
-calibration_or_manual_values = {'Use Calibration Values', 'Manually Set Opening Times'};
-protocol_settings = create_popup_menu(protocol_settings, "calibration_or_clean", 1, calibration_or_manual_values);
 
 % create variables threshold_licks and num_trials and make them user editable fields
 % protocol_settings.GUI.threshold_licks = 7;
@@ -62,7 +65,6 @@ for i = 1:Set_param_constants.NUM_VALVES
     protocol_settings.GUIMeta.(valve_name).Style = 'pushbutton';
     %
     % protocol_settings.GUIPanels.Manual_Taste_Valves{end + 1} = valve_name;
-
 end
 
 
@@ -72,21 +74,21 @@ end
 
 
 %%% BEGIN PANEL %%%
-stimulus_options = {'empty', 'stimulus_1', 'stimulus_2', 'stimulus_3', 'stimulus_4', 'stimulus_5',...
-    'stimulus_6', 'stimulus_7', 'stimulus_8', 'stimulus_9', 'stimulus_10', 'stimulus_11', 'stimulus_12',...
-    'stimulus_13', 'stimulus_14', 'stimulus_15', 'stimulus_16', 'stimulus_17', 'stimulus_18', 'stimulus_19',...
-    'stimulus_20', 'stimulus_21'};
-
-
-protocol_settings.GUIPanels.Current_valve_assignments = {};
-for i = 1:Set_param_constants.NUM_VALVES
-    line = i;
-
-    variable_name =  sprintf('valve_line_%d', line);
-    protocol_settings = create_popup_menu(protocol_settings, variable_name, 21, stimulus_options);
-
-    protocol_settings.GUIPanels.Current_valve_assignments{end + 1} = variable_name;
-end
+% stimulus_options = {'empty', 'stimulus_1', 'stimulus_2', 'stimulus_3', 'stimulus_4', 'stimulus_5',...
+%     'stimulus_6', 'stimulus_7', 'stimulus_8', 'stimulus_9', 'stimulus_10', 'stimulus_11', 'stimulus_12',...
+%     'stimulus_13', 'stimulus_14', 'stimulus_15', 'stimulus_16', 'stimulus_17', 'stimulus_18', 'stimulus_19',...
+%     'stimulus_20', 'stimulus_21'};
+% 
+% 
+% protocol_settings.GUIPanels.Current_valve_assignments = {};
+% for i = 1:Set_param_constants.NUM_VALVES
+%     line = i;
+% 
+%     variable_name =  sprintf('valve_line_%d', line);
+%     protocol_settings = create_popup_menu(protocol_settings, variable_name, 21, stimulus_options);
+% 
+%     protocol_settings.GUIPanels.Current_valve_assignments{end + 1} = variable_name;
+% end
 %%% END PANEL %%%
 
 %% unsure of what this does at this time
@@ -123,7 +125,7 @@ arguments
     default_value (1,1) double {mustBeInteger, mustBePositive}
     options cell % accept any type, but must be cell array of char vectors
 end
-settings_struct.GUI.(fieldname)= default_value; % Configurable reward condition schemes. 'BothCorrect' rewards either side.
+settings_struct.GUI.(fieldname) = default_value; % Configurable reward condition schemes. 'BothCorrect' rewards either side.
 settings_struct.GUIMeta.(fieldname).Style = 'popupmenu'; % the GUIMeta field is used by the ParameterGUI plugin to customize UI objects.
 settings_struct.GUIMeta.(fieldname).String = options;
 end

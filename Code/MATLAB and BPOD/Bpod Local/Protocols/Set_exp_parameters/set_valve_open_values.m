@@ -13,9 +13,9 @@ function settings_struct = set_valve_open_values(settings_struct, valves, type_d
     % Output:
     %   settings_struct - Updated structure with open_time fields set
     arguments
-    settings_struct struct
-    valves ValveDetails
-    type_durations string
+        settings_struct struct
+        valves ValveDetails
+        type_durations string
     end
 
     global BpodSystem   % get global BpodSystem object

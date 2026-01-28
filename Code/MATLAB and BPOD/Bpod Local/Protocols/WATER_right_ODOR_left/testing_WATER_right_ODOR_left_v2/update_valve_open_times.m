@@ -10,7 +10,7 @@ function settings_struct = update_valve_open_times(settings_struct, valve_labels
 
 arguments
     settings_struct struct
-    valve_labels int
+    valve_labels double
 end
 
 for i = 1:length(valve_labels)
