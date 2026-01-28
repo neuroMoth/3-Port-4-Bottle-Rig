@@ -56,7 +56,6 @@ for i = 1:Set_param_constants.NUM_VALVES
     valve_number = i;
 
     valve_name = sprintf('Valve_%d', valve_number);
-
     opening_time_field = sprintf('open_time_%d', valve_number);
 
     protocol_settings.GUI.(valve_name) = sprintf('Manual_Open_Valve(1,%d,BpodSystem.ProtocolSettings.GUI.%s)', valve_number, opening_time_field);

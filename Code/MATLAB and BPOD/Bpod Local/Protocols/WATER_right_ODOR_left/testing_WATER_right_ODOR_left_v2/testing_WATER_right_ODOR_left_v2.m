@@ -49,9 +49,8 @@ function testing_WATER_right_ODOR_left_v2
     %% LOAD ProtocolSettings
     S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
     if isempty(fieldnames(S)) % If /
-
         subj = BpodSystem.GUIData.SubjectName;
-        dir = 'C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\FakeSubject\Set_exp_parameters\Session Settings\DefaultSettings.mat';
+        dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\',subj,'\Set_exp_parameters\Session Settings\DefaultSettings.mat'];
         temp = load(dir);
         S = temp.ProtocolSettings; clear temp;
 
