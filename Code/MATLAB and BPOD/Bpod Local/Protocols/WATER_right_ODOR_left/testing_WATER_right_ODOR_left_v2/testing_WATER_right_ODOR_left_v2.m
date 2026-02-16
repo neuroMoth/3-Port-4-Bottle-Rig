@@ -1,8 +1,8 @@
 % Original code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
 % V2 code edited/written by Timothy Vladimir Dong for Samuelsen Lab, Univeristy of Louisville----
 
-%% TESTING PROTOCOL V2 | 2 OPERANT RESPONSE TASK
-function testing_v2
+%% TESTING PROTOCOL V2 | WATER RIGHT (Port 3)| ODOR LEFT (Port 1)
+function testing_WATER_right_ODOR_left_v2
     
     global BpodSystem % Imports the BpodSystem object to the function workspace
 
@@ -59,17 +59,13 @@ function testing_v2
 
     % UPDATE valve open times 
     S = update_valve_open_times(S, [1, expV.VALVE_SET1, expV.VALVE_SET2, 8]);
-    
     % Save protocol settings (after updating valve timings)
     BpodSystem.ProtocolSettings = S;
     SaveProtocolSettings(BpodSystem.ProtocolSettings)
     
     BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
-    % GET CONDITION FOR CURRENT SUBJECT
-    conditions = S.GUIMeta.CONDITION_CODE.String;
-    if ~any(contains(conditions, "null")); error('Error: no condition selected for this subject. '); end
-    SUBJECT_CONDITION_CODE = conditions(~contains(conditions, "null")); 
+    %conditions = S.GUIMeta.CONDITION_CODE.String;
     
     %% Generate port instances
     % port_1 is the instance of the class Port1
@@ -117,9 +113,9 @@ function testing_v2
         % Set center valve and correct port -> WHERE CORRECT CHOICE IS DEFINED
         center_port = center_port.setValve(1, center_stimulus_valve);
         correct_port = correct_port.setCorrect(port_1, port_3, center_stimulus_valve, expV.VALVE_SET1, expV.VALVE_SET2, ...
-            SUBJECT_CONDITION_CODE);
+            expV.CONDITION_CODE);
         incorrect_port = incorrect_port.setIncorrect(port_1, port_3, center_stimulus_valve, expV.VALVE_SET1, expV.VALVE_SET2, ...
-            SUBJECT_CONDITION_CODE);
+            expV.CONDITION_CODE);
 
         % new trial *block*, reset consecutiveRatSkips
         if (mod(trial, (expV.TRIALS_PER_BLOCK + 1)) == 0)
