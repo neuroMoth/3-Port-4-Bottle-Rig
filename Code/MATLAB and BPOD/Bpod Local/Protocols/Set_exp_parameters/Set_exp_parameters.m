@@ -21,23 +21,6 @@ end
 %% Session Setup
 % Assert Analog Input module is present + USB-paired (via USB button on console GUI)
 %BpodSystem.assertModule('AnalogIn', 1); % The second argument (1) indicates that AnalogIn must be paired with its USB serial port
-%
-%
-%% Setup analog input module
-%A = BpodAnalogIn(BpodSystem.ModuleUSB.AnalogIn1); % Create an instance of the Analog Input module
-%A.nActiveChannels = 1; % Record from up to 2 channels
-%
-%A.Stream2USB(1:2) = 1; % Configure only channels 1 and 2 for USB streaming
-%A.SMeventsEnabled(1) = 1; % Return threshold crossing events from Ch1
-%%A.Thresholds(1) = 2.5; % Set voltage threshold of Ch1 to 2.5V
-%
-%A.ResetVoltages(1) = 1; % Voltage must return below 1V before another threshold crossing event can be triggered
-%A.startReportingEvents; % Enable threshold event signaling
-%
-%%behaviorDataFile = BpodSystem.Path.CurrentDataFile;
-%%A.USBStreamFile = [behaviorDataFile(1:end-4) '_Alg.mat']; % Set datafile for analog data captured in this session
-%start_oscilliscope(A);
-%%--- Define parameters and trial structure
 
 S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
 
@@ -69,6 +52,9 @@ end
 
 % Initialize parameter GUI plugin with gui returned from default_protocol_settings
 BpodParameterGUI('init', S);
+
+% Print Subject Name
+disp(['Subject Name: ' subj]);
 
 %% BEGIN REPEATING STATE MACHINE -- LAST 10 MINUTES -- CONTINUOUSLY SAVES SETTINGS
 for isec = 1:Set_param_constants.NUM_SECONDS

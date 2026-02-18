@@ -48,8 +48,8 @@ function testing_v2
 
     %% LOAD ProtocolSettings
     S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
+    subj = BpodSystem.GUIData.SubjectName;
     if isempty(fieldnames(S)) % If running this protocol for the first time with this subject
-        subj = BpodSystem.GUIData.SubjectName;
         dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\',subj,'\Set_exp_parameters\Session Settings\DefaultSettings.mat'];
         temp = load(dir);
         S = temp.ProtocolSettings; clear temp;
@@ -94,6 +94,7 @@ function testing_v2
     BpodSystem.Data.fullStimulusWindow = fullStimWindow; 
 
     % Print to command window the start of the Session
+    disp(['Subject Name: ' subj]);
     fprintf('Date and time: %s\n',datetime("now"))
     fprintf('Valve Durations: '); 
     for iValves=1:length(valveID); fprintf('%s=%.1fms. ',num2str(iValves),valveOpenTimes(iValves)); end
