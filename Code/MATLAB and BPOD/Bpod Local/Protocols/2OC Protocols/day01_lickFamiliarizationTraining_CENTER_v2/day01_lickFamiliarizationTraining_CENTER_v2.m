@@ -1,10 +1,9 @@
 % Original code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
 % V2 code edited/written by Timothy Vladimir Dong for Samuelsen Lab, Univeristy of Louisville----
 
-%% LICK FAMILIARIAZATION | WATER ONLY AT ONE OF THE 3 PORTS
-%% DAY 1: CENTER
+%% LICK FAMILIARIAZATION | DAY 1: CENTER | WATER ONLY AT ONE OF THE 3 PORTS
 % Unlimited access at one of the 3 ports. Valve opens for the 1st lick, then opens on every 5th lick.
-function day1_lickFamiliarizationTraining_CENTER_v2
+function day01_lickFamiliarizationTraining_CENTER_v2
 
 global BpodSystem % Imports the BpodSystem object to the function workspace
 
@@ -61,16 +60,24 @@ W.SamplingRate = Fs;
 W.loadWaveform(1, y); % Loads a sound as waveform 1
 
 %% LOAD ProtocolSettings
-% Loads settings file chosen in launch manager into current workspace as a struct called 'S'
-S = BpodSystem.ProtocolSettings;
+S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
 subj = BpodSystem.GUIData.SubjectName;
-if isempty(fieldnames(S))
+if isempty(fieldnames(S)) % If running this protocol for the first time with this subject
     dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\',subj,'\Set_exp_parameters\Session Settings\DefaultSettings.mat'];
     temp = load(dir);
     S = temp.ProtocolSettings; clear temp;
 
     BpodSystem.ProtocolSettings = S;
 end
+
+% UPDATE valve open times
+S = update_valve_open_times(S, [1, expV.VALVE_SET1, expV.VALVE_SET2, 8]);
+
+% Save protocol settings (after updating valve timings)
+BpodSystem.ProtocolSettings = S;
+SaveProtocolSettings(BpodSystem.ProtocolSettings)
+
+BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
 % Save valve open times
 valveID = ["Valve1"; "Valve2"; "Valve3"; "Valve4"; "Valve5"; "Valve6"; "Valve7"; "Valve8"];
@@ -88,8 +95,6 @@ center_port = CenterPort; % center_port the instance of the class center_port
 
 thisPort = PortHandler; % PortHandler takes properties of current port
 thisValve = nan;
-
-BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
 % Print to command window the start of the Session
 disp(['Subject Name: ' subj]);
