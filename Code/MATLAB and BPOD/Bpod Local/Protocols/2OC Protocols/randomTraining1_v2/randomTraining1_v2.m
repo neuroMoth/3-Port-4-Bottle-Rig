@@ -22,6 +22,7 @@ function randomTraining1_v2
     BpodSystem.Status.switchStimulusFlag = false; % used to indicate when middle stimulus should switch (for alternation). 
 
     % Organizing what to save to data structure
+    BpodSystem.Data.condition = ''; 
     BpodSystem.Data.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
@@ -70,6 +71,7 @@ function randomTraining1_v2
     conditions = S.GUIMeta.CONDITION_CODE.String;
     if ~any(contains(conditions, "null")); error('Error: no condition selected for this subject. '); end
     SUBJECT_CONDITION_CODE = conditions(~contains(conditions, "null")); 
+    BpodSystem.Data.condition = SUBJECT_CONDITION_CODE; 
     
     %% Generate port instances
     % port_1 is the instance of the class Port1
@@ -95,6 +97,7 @@ function randomTraining1_v2
 
     % Print to command window the start of the Session
     disp(['Subject Name: ' subj]);
+    disp(['Condition: ' char(SUBJECT_CONDITION_CODE)]);
     fprintf('Date and time: %s\n',datetime("now"))
     fprintf('Valve Durations: '); 
     for iValves=1:length(valveID); fprintf('%s=%.1fms. ',num2str(iValves),valveOpenTimes(iValves)); end

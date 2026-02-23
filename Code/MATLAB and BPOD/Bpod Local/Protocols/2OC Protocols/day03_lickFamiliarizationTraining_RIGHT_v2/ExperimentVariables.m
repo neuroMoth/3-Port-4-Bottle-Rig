@@ -5,7 +5,7 @@ classdef ExperimentVariables
         TOTAL_ALLOWED_TIME = 1800; %seconds - 30min for familiarization
 
         VALVE_SET1 = [2]; %Water valves
-        %VALVE_SET2 = [5, 6, 7]; %Odor valves
+        VALVE_SET2 = []; %Odor valves
         
         REWARD_LICKS = [6]; %range of possible rewarded lick to be pseudorandomized per valve (+1 from # of dry licks)
         REWARD_VALVE_DELAY = [0/1000]; %delay from lick detection to valve opening
