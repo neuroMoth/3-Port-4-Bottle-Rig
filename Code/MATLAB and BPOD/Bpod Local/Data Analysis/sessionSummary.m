@@ -91,7 +91,7 @@ function sessionSummary(animal, date)
     nTotalTr=length(SessionData.TrialStartTimestamp);
     nCorrectTr=sum(SessionData.correctTrials==1);
     nEngagedTr=sum(SessionData.trialsEngaged); 
-    consEstimate = (nEngagedTr+nCorrectTr)*30/1000; 
+    consEstimate = (nEngagedTr*30/1000) + (nCorrectTr*40/1000); % 30ul / 1000 = 0.03ml, 40ul / 1000 = 0.04ml
 
     % Print to command window
     fprintf('Date: %s   Start time: %s   ',sessionDate,sessionTime)

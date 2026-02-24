@@ -17,7 +17,7 @@ sma = AddState(sma, 'Name', 'doorsOpen', ...
 SendStateMachine(sma);
 events = RunStateMachine();
 
-events
+events;
 
 
 
