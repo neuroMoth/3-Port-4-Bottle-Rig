@@ -1,8 +1,8 @@
 % Original code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
 % V2 code edited/written by Timothy Vladimir Dong for Samuelsen Lab, Univeristy of Louisville----
 
-%% ALTERNATION 3 | NONCONSECUTIVE TRAINING PROTOCOL V2 
-function day12_alternation3_4nonconsecutive_v2
+%% ALTERNATION 1 | NONCONSECUTIVE TRAINING PROTOCOL V2
+function day10_alternation1_8nonconsecutive_v2
     
     global BpodSystem % Imports the BpodSystem object to the function workspace
 

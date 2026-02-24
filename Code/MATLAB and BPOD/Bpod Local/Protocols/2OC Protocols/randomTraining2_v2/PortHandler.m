@@ -4,6 +4,7 @@ classdef PortHandler
         lick_input;
         lick_counter_id;
         lick_counter_event;
+        door;
 
         valve;
         valve_time;
@@ -69,10 +70,11 @@ classdef PortHandler
         function obj = setProperties(obj, port_number, port_instance)
             global BpodSystem
             obj.port = port_number;
-            % switch correct to 1 (WATER center)
+            
             obj.lick_input = port_instance.LICK_INPUT;
             obj.lick_counter_id = port_instance.COUNTER_ID;
             obj.lick_counter_event= port_instance.COUNTER_EVENT;
+            obj.door= port_instance.DOOR;
 
             obj.valve = port_instance.VALVE;
             time_variable_name = sprintf('open_time_%d', obj.valve);
