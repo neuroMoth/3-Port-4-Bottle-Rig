@@ -18,10 +18,10 @@ classdef ExperimentVariables
         MAXIMUM_TRIALS = 160; 
         MINIMUM_TRIALS = 160; 
         TRIALS_PER_BLOCK = 20; 
-        MAX_REPEATS = 8; 
+        MAX_REPEATS = 4; 
 
         %SKIPPED_TRIALS_THRESHOLD = 20; % threshold of consecutive trials skipped in a 20 trial block to end early
-        CORRECT_REQUIRED_TO_SWITCH = 4; % only for use with alternation training days 
+        CORRECT_REQUIRED_TO_SWITCH = 8; % only for use with alternation training days 
 
         % these varaibles are used to make door commands more intuitive and easy to understand & read.
         UP = 0;
