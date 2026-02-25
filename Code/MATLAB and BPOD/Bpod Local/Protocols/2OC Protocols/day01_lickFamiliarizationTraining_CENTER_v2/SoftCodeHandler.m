@@ -21,7 +21,7 @@ function SoftCodeHandler(Byte)
             % For lick familiarization only: number of rewarded licks
             BpodSystem.Data.lickNumber = BpodSystem.Data.lickNumber + 1;
 
-            fprintf('%d/n', BpodSystem.Data.lickNumber)
+            fprintf('%d\n', BpodSystem.Data.lickNumber)
         case 14
             % Report Incorrect
             BpodSystem.Data.correctTrials(BpodSystem.Status.trial) = 0;
