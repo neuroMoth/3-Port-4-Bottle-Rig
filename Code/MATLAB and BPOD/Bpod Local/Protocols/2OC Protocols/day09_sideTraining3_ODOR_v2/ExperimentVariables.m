@@ -20,7 +20,7 @@ classdef ExperimentVariables
         TRIALS_PER_BLOCK = 20; 
         MAX_REPEATS = 4; 
         
-        SIDE_TRAINING_STIMULUS = 0; % 0 for water, 1 for odor
+        SIDE_TRAINING_STIMULUS = 1; % 0 for water, 1 for odor
 
         %SKIPPED_TRIALS_THRESHOLD = 20; % threshold of consecutive trials skipped in a 20 trial block to end early
         %CORRECT_REQUIRED_TO_SWITCH = 9999; % only for use with alternation training days 
