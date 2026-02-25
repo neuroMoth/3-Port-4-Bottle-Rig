@@ -17,6 +17,11 @@ function SoftCodeHandler(Byte)
             % Trial *was* engaged, reset consecutiveRatSkips
             BpodSystem.Status.consecutiveRatSkips = 0; 
             BpodSystem.Data.trialsEngaged(BpodSystem.Status.trial) = 1;
+        case 4
+            % For lick familiarization only: number of rewarded licks
+            BpodSystem.Data.lickNumber = BpodSystem.Data.lickNumber + 1;
+
+            fprintf('%d/n', BpodSystem.Data.lickNumber)
         case 14
             % Report Incorrect
             BpodSystem.Data.correctTrials(BpodSystem.Status.trial) = 0;
