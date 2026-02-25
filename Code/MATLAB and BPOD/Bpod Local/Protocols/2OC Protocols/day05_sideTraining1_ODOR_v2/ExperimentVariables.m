@@ -7,7 +7,7 @@ classdef ExperimentVariables
         TTC_LATERAL_TIME = 60; %seconds
         LICK_WINDOW = 2; %seconds | Defines amount of seconds rat has to complete required amount of licks.
         DELAY_TIME = 0; %seconds | delay from closing the center door to opening the lateral door
-        STIMULUS_WINDOW = 300/1000; %ms after valve closes before door goes up (if still within LICK_WINDOW)
+        STIMULUS_WINDOW = 600/1000; %ms after valve closes before door goes up (if still within LICK_WINDOW)
 
         VALVE_SET1 = [2, 3, 4]; %Water valves
         VALVE_SET2 = [5, 6, 7]; %Odor valves
@@ -20,7 +20,7 @@ classdef ExperimentVariables
         TRIALS_PER_BLOCK = 20; 
         MAX_REPEATS = 4; 
         
-        SIDE_TRAINING_STIMULUS = 0; % 0 for water, 1 for odor
+        SIDE_TRAINING_STIMULUS = 1; % 0 for water, 1 for odor
 
         %SKIPPED_TRIALS_THRESHOLD = 20; % threshold of consecutive trials skipped in a 20 trial block to end early
         %CORRECT_REQUIRED_TO_SWITCH = 9999; % only for use with alternation training days 

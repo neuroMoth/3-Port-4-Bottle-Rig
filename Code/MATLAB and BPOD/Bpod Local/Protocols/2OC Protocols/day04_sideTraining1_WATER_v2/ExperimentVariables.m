@@ -7,7 +7,7 @@ classdef ExperimentVariables
         TTC_LATERAL_TIME = 60; %seconds
         LICK_WINDOW = 2; %seconds | Defines amount of seconds rat has to complete required amount of licks.
         DELAY_TIME = 0; %seconds | delay from closing the center door to opening the lateral door
-        STIMULUS_WINDOW = 300/1000; %ms after valve closes before door goes up (if still within LICK_WINDOW)
+        STIMULUS_WINDOW = 600/1000; %ms after valve closes before door goes up (if still within LICK_WINDOW)
 
         VALVE_SET1 = [2, 3, 4]; %Water valves
         VALVE_SET2 = [5, 6, 7]; %Odor valves

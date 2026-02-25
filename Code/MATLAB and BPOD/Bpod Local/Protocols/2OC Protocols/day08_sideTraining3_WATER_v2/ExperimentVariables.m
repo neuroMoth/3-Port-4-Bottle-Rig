@@ -13,7 +13,7 @@ classdef ExperimentVariables
         VALVE_SET2 = [5, 6, 7]; %Odor valves
         
         REWARD_LICKS = [4]; %range of possible rewarded lick to be pseudorandomized per valve (+1 from # of dry licks)
-        REWARD_VALVE_DELAY = [25/1000]; %delay from lick detection to valve opening
+        REWARD_VALVE_DELAY = [25/1000]; %delay from lick detection to valve opening (center)
  
         MAXIMUM_TRIALS = 160; 
         MINIMUM_TRIALS = 160; 
