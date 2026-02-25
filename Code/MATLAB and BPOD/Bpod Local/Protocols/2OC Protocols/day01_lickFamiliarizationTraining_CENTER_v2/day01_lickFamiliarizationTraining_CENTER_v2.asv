@@ -29,7 +29,6 @@ function day01_lickFamiliarizationTraining_CENTER_v2
     BpodSystem.Status.iWaterTrial = 1; % for iterating water trial variables
 
     % Organizing what to save to data structure
-    BpodSystem.Data.lickNumber = 0; 
     % BpodSystem.Data.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
     % BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
     % BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
@@ -133,7 +132,7 @@ function day01_lickFamiliarizationTraining_CENTER_v2
     end
 
     fprintf('Port%d. Valve%d. %d dry licks. %dms valve delay. \n', portSession, thisValve, num_dryLicks, center_valveDelay*1000);
-    fprintf('\nCount Number of Reward Licks: \n')
+    fprintf('')
 
     %% Assemble the State Machine
     sma = NewStateMachine();
@@ -184,7 +183,7 @@ function day01_lickFamiliarizationTraining_CENTER_v2
         'Timer', thisPort.valve_time,...
         'StateChangeConditions', {'Tup', 'closeReward'},...
         'OutputActions',{thisPort.door, expV.DOWN, 'ValveModule1', ['O' thisPort.valve], ...
-        'GlobalCounterReset', thisPort.lick_counter_id, 'SoftCode', 4});
+        'GlobalCounterReset', thisPort.lick_counter_id});
     sma = AddState(sma, 'Name', 'closeReward', ...
         'Timer', 0,...
         'StateChangeConditions', {'Tup', 'waitDryLicks'},...
@@ -212,7 +211,6 @@ function day01_lickFamiliarizationTraining_CENTER_v2
     end
     HandlePauseCondition; % Checks to see if the protocol is paused. If so, waits until user resumes.
 
-    fprintf('%d total licks.', BpodSystem.Data.lickNumber)
     fprintf('\n')
 
     if (BpodSystem.Status.ExitTrialLoop || BpodSystem.Status.BeingUsed == 0 || trial == expV.MAXIMUM_TRIALS)
