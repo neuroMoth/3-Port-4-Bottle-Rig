@@ -15,8 +15,8 @@ classdef ExperimentVariables
         REWARD_LICKS = [2]; %range of possible rewarded licks at the center (+1 from # of dry licks)
         REWARD_VALVE_DELAY = [10/1000]; %delay from lick detection to valve opening
  
-        MAXIMUM_TRIALS = 160; 
-        MINIMUM_TRIALS = 160; 
+        MAXIMUM_TRIALS = 200; 
+        MINIMUM_TRIALS = 100; 
         TRIALS_PER_BLOCK = 20; 
         MAX_REPEATS = 4; 
         
