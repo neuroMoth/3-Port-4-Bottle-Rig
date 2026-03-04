@@ -1,7 +1,7 @@
 classdef ExperimentVariables 
     properties (Constant)
         TOTAL_ALLOWED_TIME = 3600; %seconds
-        ITI_TIME = 5; %seconds 
+        ITI_TIME = 8; %seconds 
         PUNISHMENT_TIME = 0; %seconds
         TTC_CENTER_TIME = 30; %seconds
         TTC_LATERAL_TIME = 30; %seconds
@@ -15,8 +15,8 @@ classdef ExperimentVariables
         REWARD_LICKS = [4]; %range of possible rewarded lick to be pseudorandomized per valve (+1 from # of dry licks)
         REWARD_VALVE_DELAY = [25/1000]; %delay from lick detection to valve opening
  
-        MAXIMUM_TRIALS = 200; 
-        MINIMUM_TRIALS = 100; 
+        MAXIMUM_TRIALS = 180; 
+        MINIMUM_TRIALS = 120; 
         TRIALS_PER_BLOCK = 20; 
         MAX_REPEATS = 4; 
         

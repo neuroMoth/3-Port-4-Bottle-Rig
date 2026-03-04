@@ -110,6 +110,9 @@ function day08_sideTraining3_WATER_v2
     fprintf('Valve Durations: '); 
     for iValves=1:length(valveID); fprintf('%s=%.1fms. ',num2str(iValves),valveOpenTimes(iValves)); end
     fprintf('\nSTIMULUS: ')
+    
+    clear elapsedTime; 
+    elapsedTime; % First call of timer function to track session length
 
     %% MAIN TRIAL LOOP
     % do MAXIMUM_TRIALS as defined in ExperimentVariables file if 60 minutes has not elapsed.
@@ -317,7 +320,11 @@ function day08_sideTraining3_WATER_v2
 
         fprintf('\n')
 
-        if (BpodSystem.Status.ExitTrialLoop || BpodSystem.Status.BeingUsed == 0 || trial == expV.MAXIMUM_TRIALS)
+        % Check if experiment ends
+        t = elapsedTime; 
+        if (BpodSystem.Status.ExitTrialLoop || BpodSystem.Status.BeingUsed == 0 || trial == expV.MAXIMUM_TRIALS || t > expV.TOTAL_ALLOWED_TIME)
+            disp(['Experiment duration: ' num2str(t) 'sec.\n' ])
+            clear elapsedTime;
             stop_experiment(A, W);
             sessionSummary();
             return
