@@ -317,7 +317,7 @@ function day07_sideTraining2_ODOR_v2
         % Check if experiment ends
         t = elapsedTime; 
         if (BpodSystem.Status.ExitTrialLoop || BpodSystem.Status.BeingUsed == 0 || trial == expV.MAXIMUM_TRIALS || t > expV.TOTAL_ALLOWED_TIME)
-            disp(['Experiment duration: ' num2str(t) 'sec.\n' ])
+            disp(['Experiment duration: ' num2str(t) 'sec.' ])
             clear elapsedTime; 
             stop_experiment(A, W);
             sessionSummary();
