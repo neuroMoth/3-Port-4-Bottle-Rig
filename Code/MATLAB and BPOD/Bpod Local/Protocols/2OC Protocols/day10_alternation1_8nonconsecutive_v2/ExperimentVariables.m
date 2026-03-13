@@ -1,7 +1,7 @@
 classdef ExperimentVariables 
     properties (Constant)
         TOTAL_ALLOWED_TIME = 3600; %seconds
-        ITI_TIME = 10; %seconds 
+        ITI_TIME = 15; %seconds 
         PUNISHMENT_TIME = 10; %seconds
         TTC_CENTER_TIME = 15; %seconds
         TTC_LATERAL_TIME = 15; %seconds
