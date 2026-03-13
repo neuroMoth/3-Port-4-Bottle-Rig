@@ -2,7 +2,7 @@ classdef ExperimentVariables
     properties (Constant)
         CONDITION_CODE = 'WROL'; % WROL = Water Right, Odor Left 
         
-        TOTAL_ALLOWED_TIME = 4000; %seconds
+        TOTAL_ALLOWED_TIME = 3600; %seconds
         ITI_TIME = 15; %seconds 
         PUNISHMENT_TIME = 10; %seconds
         TTC_CENTER_TIME = 5; %seconds
