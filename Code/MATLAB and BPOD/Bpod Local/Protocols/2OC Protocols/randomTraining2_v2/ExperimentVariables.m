@@ -1,8 +1,6 @@
 classdef ExperimentVariables 
     properties (Constant)
-        CONDITION_CODE = 'WROL'; % WROL = Water Right, Odor Left 
-        
-        TOTAL_ALLOWED_TIME = 3600; %seconds
+        TOTAL_ALLOWED_TIME = 4500; %seconds
         ITI_TIME = 15; %seconds 
         PUNISHMENT_TIME = 10; %seconds
         TTC_CENTER_TIME = 5; %seconds
@@ -22,6 +20,7 @@ classdef ExperimentVariables
         TRIALS_PER_BLOCK = 20; 
         MAX_REPEATS = 4; 
 
+        %CONDITION_CODE = 'WROL'; % WROL = Water Right, Odor Left  
         %SKIPPED_TRIALS_THRESHOLD = 20; % threshold of consecutive trials skipped in a 20 trial block to end early
         %CORRECT_REQUIRED_TO_SWITCH = 2; % only for use with alternation training days 
 

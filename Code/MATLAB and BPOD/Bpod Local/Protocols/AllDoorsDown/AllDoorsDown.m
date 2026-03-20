@@ -20,11 +20,13 @@ SaveProtocolSettings(BpodSystem.ProtocolSettings)
 
 BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
+disp('Doors down for 1 hour or until the protocol is stopped. ')
+
 %% DOORS DOWN STATE MACHINE
 sma = NewStateMachine();
 
 sma = AddState(sma, 'Name', 'start', ...
-    'Timer', 2000,...
+    'Timer', 3600,...
     'StateChangeConditions', {'Tup', 'doorsOpen'},...
     'OutputActions',{'Flex1DO', 1, 'Flex2DO', 1,'Flex3DO', 1, 'Flex4DO', 0});
 
