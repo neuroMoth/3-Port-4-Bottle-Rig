@@ -20,8 +20,8 @@ n_lickRange = numel(rewardLickRange); % = 3
 n_rewardDelay = numel(rewardDelayRange); % = 3
 
 % Set threshold for valve repeats on the same side (constraint in addition to max side repeats)
-if n_v1 == 1; maxV1Rep = inf; else; maxV1Rep = 1; end
-if n_v2 == 1; maxV2Rep = inf; else; maxV2Rep = 1; end
+if n_v1 == 1; maxV1Rep = inf; else; maxV1Rep = 2; end
+if n_v2 == 1; maxV2Rep = inf; else; maxV2Rep = 2; end
 
 %% --- First: pseudorandom order generation for trial side order ---
 isValid = false; attempts = 0;
