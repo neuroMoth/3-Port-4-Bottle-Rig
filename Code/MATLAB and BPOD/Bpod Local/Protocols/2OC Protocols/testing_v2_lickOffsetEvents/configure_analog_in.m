@@ -8,7 +8,7 @@ function A = configure_analog_in
     A.SamplingRate = 10000; % Set the sampling rate to 10kHz
     A.nActiveChannels = 4;
     % enable event reporting on AnalogInput1. This sends lick 'events' to the state machine to be processed/counted.
-    A.InputRange{1:4} = '0V:5V'; % Set input range
+    [A.InputRange{1:4}] = deal('0V:5V'); % Set input range
     A.SMeventsEnabled(1:4) = 1; 
     % This sets threshold voltages that we want to cross to generate events. Here we use 1 volt.
     A.Thresholds(1:4) = 1;
