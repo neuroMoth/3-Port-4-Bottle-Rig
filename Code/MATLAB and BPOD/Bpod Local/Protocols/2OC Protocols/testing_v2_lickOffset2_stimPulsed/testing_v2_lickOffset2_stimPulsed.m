@@ -36,8 +36,8 @@ function testing_v2_lickOffset2_stimPulsed
     BpodSystem.Data.experimentVariables = expVarTable; % Save table to structure
 
     % Generating lineup and jitter for valve openings
-    [center_port_valve_lineup, reward_lick_lineup, center_delay_lineup] = GenerateCenterLineup();
-    BpodSystem.Data.centerValveDelay = center_delay_lineup; 
+    [center_port_valve_lineup, reward_lick_lineup, ~] = GenerateCenterLineup();
+    %BpodSystem.Data.centerValveDelay = center_delay_lineup; 
 
     % configure the analog in. performed in configure_analog_in.m
     A = configure_analog_in();
@@ -50,7 +50,7 @@ function testing_v2_lickOffset2_stimPulsed
     %% LOAD ProtocolSettings
     S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
     subj = BpodSystem.GUIData.SubjectName;
-    if isempty(fieldnames(S)) % If running this protocol for the first time with this subject
+    if isempty(S) || isempty(fieldnames(S)) % If running this protocol for the first time with this subject, or if settings cannot be found
         dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\',subj,'\Set_exp_parameters\Session Settings\DefaultSettings.mat'];
         temp = load(dir);
         S = temp.ProtocolSettings; clear temp;
@@ -119,7 +119,7 @@ function testing_v2_lickOffset2_stimPulsed
         % Get center valve and number of dry licks for this trial
         center_stimulus_valve = center_port_valve_lineup(trial); 
         num_dryLicks = reward_lick_lineup(trial)-1;
-        center_valveDelay = center_delay_lineup(trial);
+        %center_valveDelay = center_delay_lineup(trial);
 
         % Set center valve and correct port -> WHERE CORRECT CHOICE IS DEFINED
         center_port = center_port.setValve(1, center_stimulus_valve);
@@ -140,8 +140,8 @@ function testing_v2_lickOffset2_stimPulsed
         %     end
         % end
 
-        fprintf('Center=valve%d. %d dry licks. %dms valve delay. ',center_stimulus_valve, num_dryLicks, center_valveDelay*1000);
-        fprintf('Correct=port%d. ',correct_port.port); fprintf('Incorrect=port%d. ',incorrect_port.port);
+        fprintf('Center=valve%d. DryLicks=%d. ', center_stimulus_valve, num_dryLicks);
+        fprintf('Correct=port%d. ', correct_port.port); %fprintf('Incorrect=port%d. ', incorrect_port.port);
 
         %% Assemble the State Machine for this Trial
         sma = NewStateMachine();
@@ -149,12 +149,12 @@ function testing_v2_lickOffset2_stimPulsed
         % set global timers for the maximum duration of the experiment and the maximum sample time of 2 seconds.
         sma = SetGlobalTimer(sma, 'TimerID', expV.EXPERIMENT_TIMER_ID, 'Duration', expV.TOTAL_ALLOWED_TIME);
         sma = SetGlobalTimer(sma, 'TimerID', expV.LICK_WINDOW_TIMER_ID, 'Duration', expV.LICK_WINDOW); % 2 seconds to get all dry licks
-        sma = SetGlobalTimer(sma, 'TimerID', expV.STIM_WINDOW_TIMER_ID, 'Duration', fullStimWindow); % Max time after valve opens before door goes up
+        %sma = SetGlobalTimer(sma, 'TimerID', expV.STIM_WINDOW_TIMER_ID, 'Duration', fullStimWindow); % Max time after valve opens before door goes up
 
         % set global counters for each of the possible input ports (AnalogIn1 ports 1-4). 
         % Arguments: (sma, CounterNumber, TargetEvent, Threshold)
         sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, num_dryLicks); 
-        sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks);
+        %sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks);
         sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 3);
         sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 3);
 

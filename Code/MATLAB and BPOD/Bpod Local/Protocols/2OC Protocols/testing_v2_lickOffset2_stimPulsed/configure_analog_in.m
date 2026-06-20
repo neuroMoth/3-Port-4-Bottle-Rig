@@ -5,7 +5,7 @@ function A = configure_analog_in
     BpodSystem.assertModule('AnalogIn', 1);
 
     A = BpodAnalogIn(BpodSystem.ModuleUSB.AnalogIn1);
-    A.SamplingRate = 10000; % Set the sampling rate to 10kHz
+    A.SamplingRate = 5000; % Set the sampling rate to 5kHz
     A.nActiveChannels = 4;
     % enable event reporting on AnalogInput1. This sends lick 'events' to the state machine to be processed/counted.
     [A.InputRange{1:4}] = deal('0V:5V'); % Set input range
