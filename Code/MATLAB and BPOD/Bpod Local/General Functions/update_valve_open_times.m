@@ -11,17 +11,21 @@ function settings_struct = update_valve_open_times(settings_struct, valve_labels
 arguments
     settings_struct struct
     valve_labels double
-    target_amount double
+    target_amount double = 0
 end
 
 for i = 1:length(valve_labels)
     valve = valve_labels(i);
 
     variable_name =  sprintf('select_amount_valve%d', valve);
-    %targetAmounts = str2double(settings_struct.GUIMeta.(variable_name).String);
-
     open_time = sprintf('open_time_%d', valve);
-    settings_struct.GUI.(open_time) = (GetValveTimes(target_amount,valve)) * 1000;
+
+    if target_amount == 0
+        targetAmounts = str2double(settings_struct.GUIMeta.(variable_name).String);
+        settings_struct.GUI.(open_time) = (GetValveTimes(targetAmounts(settings_struct.GUI.(variable_name)),valve)) * 1000;
+    else; settings_struct.GUI.(open_time) = (GetValveTimes(target_amount,valve)) * 1000;
+    end
+    
 end
 
 end
