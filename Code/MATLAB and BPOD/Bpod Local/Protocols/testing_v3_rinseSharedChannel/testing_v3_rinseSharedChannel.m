@@ -103,8 +103,8 @@ function testing_v3_rinseSharedChannel
     % Get valve times for rinse and loading, and make sure the values allow for full ITI 
     valveLoadingTime = ceil(mean(GetValveTimes(expV.LOAD_VOLUME, centerValves))*100)/100; 
     valveRinseTime = GetValveTimes(expV.RINSE_VOLUME, expV.RINSE_VALVE); 
-    if (expV.ITI_TIME - expV.ITI_ENDTIME) < (valveLoadingTime + valveRinseTime + 1.5)
-        error('Error: no condition selected for this subject. '); 
+    if (expV.ITI_TIME - expV.ITI_ENDTIME) < (valveLoadingTime + valveRinseTime + 2)
+        error('Error: calibration values for rinse and preloading are incompatible with this protocol. '); 
     end
     
     % totalValveWindow = ceil(mean(valveOpenTimes)/100)*100; % round up to nearest 100 ms to set stim window
@@ -202,7 +202,7 @@ function testing_v3_rinseSharedChannel
             'StateChangeConditions', {'Tup', 'ITI_endStimLoad'},...
             'OutputActions',{center_port.DOOR, expV.UP, expV.VAC_VALVE, 1, 'ValveModule1', ['O' center_port.left_valve]});
         sma = AddState(sma, 'Name', 'ITI_endStimLoad', ...
-            'Timer', 1,...
+            'Timer', 1.5,...
             'StateChangeConditions', {'Tup', 'ITI_waitForRemaining', expV.itiTimeExpired, 'TTC_Center'},...
             'OutputActions',{center_port.DOOR, expV.UP, expV.VAC_VALVE, 1, 'ValveModule1', ['C' center_port.left_valve]});
         sma = AddState(sma, 'Name', 'ITI_waitForRemaining', ...
