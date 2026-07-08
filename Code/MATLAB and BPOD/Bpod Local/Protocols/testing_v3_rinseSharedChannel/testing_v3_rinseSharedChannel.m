@@ -44,7 +44,7 @@ function testing_v3_rinseSharedChannel
     BpodSystem.Data.experimentVariables = expVarTable; % Save table to structure
 
     % Generating lineup and jitter for valve openings
-    [center_port_valve_lineup, reward_lick_lineup, ~] = GenerateCenterLineup();
+    [~, center_port_valve_lineup, reward_lick_lineup] = GenerateCenterLineup();
     %BpodSystem.Data.centerValveDelay = center_delay_lineup; 
 
     % configure the analog in. performed in configure_analog_in.m

@@ -1,8 +1,10 @@
-function [center_lineup, rewardLickOrder, rewardDelays] = GenerateCenterLineup()
+function [side_lineup, center_lineup, rewardLickOrder] = GenerateCenterLineup()
 %% --- Initialize random number generator ---
 rng("shuffle"); % Creates a new seed for each time to ensure independent values
 
 % --- Define parameters ---
+gellermannBlocks = load("gellermanSeries_20TrBlock_0.2altTolerance");
+
 expV = ExperimentVariables;
 total_trials = expV.MAXIMUM_TRIALS;
 block_size = expV.TRIALS_PER_BLOCK;
@@ -28,26 +30,31 @@ isValid = false; attempts = 0;
 while ~isValid
     attempts = attempts + 1;
     % Initialize an empty array to store the final side lineup
-    side_lineup = [];
+    %side_lineup = [];
+    
+    % Select set of blocks from gellermann series
+    iSessionBlocks = randperm(size(gellermannBlocks.cell, 1), num_blocks)';
+    blockOrders =  gellermannBlocks.cell(iSessionBlocks, :)'; 
+    side_lineup = str2double(blockOrders(:))'; 
 
     % --- Loop through each block to create the full lineup ---
-    for i = 1:num_blocks
-
-        % -- Apply the randomization logic to a SINGLE block of 20 --
-        side_num_reps = floor(block_size / 2);
-        isValidBlock = false;
-        while ~isValidBlock
-            % Correct side randomization
-            side_base_list = repmat([0,1], 1, side_num_reps); % 0 is Left, 1 is Right
-            side_shuffled_block = side_base_list(randperm(block_size)); % Shuffle the block
-
-            % Check validity of this block
-            if isValidSequence(side_shuffled_block, maxRepeats)
-                isValidBlock = true;
-            end
-        end
-        side_lineup = [side_lineup, side_shuffled_block];
-    end
+    % for i = 1:num_blocks
+    % 
+    %     % -- Apply the randomization logic to a SINGLE block of 20 --
+    %     side_num_reps = floor(block_size / 2);
+    %     isValidBlock = false;
+    %     while ~isValidBlock
+    %         % Correct side randomization
+    %         side_base_list = repmat([0,1], 1, side_num_reps); % 0 is Left, 1 is Right
+    %         side_shuffled_block = side_base_list(randperm(block_size)); % Shuffle the block
+    % 
+    %         % Check validity of this block
+    %         if isValidSequence(side_shuffled_block, maxRepeats)
+    %             isValidBlock = true;
+    %         end
+    %     end
+    %     side_lineup = [side_lineup, side_shuffled_block];
+    % end
 
     % Check validity of whole session sequence
     if isValidSequence(side_lineup, maxRepeats)
