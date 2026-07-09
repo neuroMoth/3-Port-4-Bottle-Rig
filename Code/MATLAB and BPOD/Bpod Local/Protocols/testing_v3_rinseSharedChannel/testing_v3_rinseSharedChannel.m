@@ -31,10 +31,8 @@ function testing_v3_rinseSharedChannel
 
     % Organizing what to save to data structure
     BpodSystem.Data.condition = ''; 
+    BpodSystem.Data.trialOrder.trialTypeOrder = [];
     BpodSystem.Data.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
-    BpodSystem.Data.correctPort = zeros(expV.MAXIMUM_TRIALS, 1);
-    BpodSystem.Data.centerValve = zeros(expV.MAXIMUM_TRIALS, 1);
-    BpodSystem.Data.rewardLick = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.trialsEngaged = zeros(expV.MAXIMUM_TRIALS, 1);
 
     % Saving ExperimentVariables
@@ -44,16 +42,10 @@ function testing_v3_rinseSharedChannel
     BpodSystem.Data.experimentVariables = expVarTable; % Save table to structure
 
     % Generating lineup and jitter for valve openings
-    [~, center_port_valve_lineup, reward_lick_lineup] = GenerateCenterLineup();
-    %BpodSystem.Data.centerValveDelay = center_delay_lineup; 
-
-    % configure the analog in. performed in configure_analog_in.m
-    A = configure_analog_in();
-
-    % Set up wave player
-    W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1);
-    W.SamplingRate = Fs;
-    W.loadWaveform(1, y); % Loads a sound as waveform 1
+    [trial_order, center_port_valve_lineup, reward_lick_lineup] = GenerateCenterLineup();
+    BpodSystem.Data.trialOrder.trialTypeOrder = trial_order; 
+    BpodSystem.Data.trialOrder.centerValve = center_port_valve_lineup;
+    BpodSystem.Data.trialOrder.rewardLick = reward_lick_lineup; 
 
     %% LOAD ProtocolSettings
     S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
@@ -68,7 +60,7 @@ function testing_v3_rinseSharedChannel
 
     % UPDATE valve open times for parameter sheet
     centerValves = [expV.VALVE_SET1, expV.VALVE_SET2]; 
-    S = update_valve_open_times(S, [1, centerValves, expV.RINSE_VALVE, 8], expV.STIM_VOLUME);
+    S = update_valve_open_times(S, [1, 2, centerValves, expV.RINSE_VALVE, 8], expV.STIM_VOLUME);
     
     % Save protocol settings (after updating valve timings)
     BpodSystem.ProtocolSettings = S;
@@ -107,9 +99,13 @@ function testing_v3_rinseSharedChannel
         error('Error: calibration values for rinse and preloading are incompatible with this protocol. '); 
     end
     
-    % totalValveWindow = ceil(mean(valveOpenTimes)/100)*100; % round up to nearest 100 ms to set stim window
-    % fullStimWindow = (totalValveWindow/1000) + expV.STIMULUS_WINDOW; % convert totalValve window to seconds
-    % BpodSystem.Data.fullStimulusWindow = fullStimWindow; 
+    % configure the analog in. performed in configure_analog_in.m
+    A = configure_analog_in();
+
+    % Set up wave player
+    W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1);
+    W.SamplingRate = Fs;
+    W.loadWaveform(1, y); % Loads a sound as waveform 1
 
     % Print to command window the start of the Session
     disp(['Subject Name: ' subj]);
@@ -117,8 +113,8 @@ function testing_v3_rinseSharedChannel
     fprintf('Date and time: %s\n',datetime("now"))
     fprintf(['Valve Durations (' num2str(expV.STIM_VOLUME), 'ul): ']); 
     for iValves=1:length(valveID); fprintf('%s=%.1fms. ',num2str(iValves),valveOpenTimes(iValves)); end
-    fprintf(['\nLoad: ' num2str(expV.LOAD_VOLUME), 'ul, ', num2str(valveLoadingTime), 'ms. '])
-    fprintf(['Rinse: ' num2str(expV.RINSE_VOLUME), 'ul, ', num2str(valveRinseTime), 'ms. '])
+    fprintf(['\nLoad: ' num2str(expV.LOAD_VOLUME), 'ul, ', num2str(valveLoadingTime), 's. '])
+    fprintf(['Rinse: ' num2str(expV.RINSE_VOLUME), 'ul, ', num2str(valveRinseTime), 's. '])
     fprintf('\n')
     
     clear elapsedTime; 
@@ -158,6 +154,9 @@ function testing_v3_rinseSharedChannel
         %     end
         % end
 
+        BpodSystem.Data.trialOrder.rewardLick(trial) = num_dryLicks+1;
+        BpodSystem.Data.trialOrder.correctPort(trial) = correct_port.port;
+
         fprintf('Center=valve%d. DryLicks=%d. ', center_stimulus_valve, num_dryLicks);
         fprintf('Correct=port%d. ', correct_port.port); %fprintf('Incorrect=port%d. ', incorrect_port.port);
 
@@ -172,13 +171,8 @@ function testing_v3_rinseSharedChannel
         % set global counters for each of the possible input ports (AnalogIn1 ports 1-4). 
         % Arguments: (sma, CounterNumber, TargetEvent, Threshold)
         sma = SetGlobalCounter(sma, center_port.LEFT_COUNTER_ID, center_port.LEFT_LICK_INPUT, num_dryLicks); 
-        %sma = SetGlobalCounter(sma, center_port.RIGHT_COUNTER_ID, center_port.RIGHT_LICK_INPUT, num_dryLicks);
         sma = SetGlobalCounter(sma, port_1.COUNTER_ID, port_1.LICK_INPUT, 3);
         sma = SetGlobalCounter(sma, port_3.COUNTER_ID, port_3.LICK_INPUT, 3);
-
-        BpodSystem.Data.centerValve(trial) = center_port.left_valve;
-        BpodSystem.Data.correctPort(trial) = correct_port.port;
-        BpodSystem.Data.rewardLick(trial) = num_dryLicks+1;
 
         %% Adding States
 
@@ -187,14 +181,14 @@ function testing_v3_rinseSharedChannel
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'ITI_rinseAndVacStart'},...
             'OutputActions', {port_1.DOOR, expV.UP, center_port.DOOR, expV.UP, port_3.DOOR, expV.UP, ...
-            'ValveModule1', ['B' 00000000], expV.VAC_VALVE, 0});
+            'ValveModule1', ['B' 0], expV.VAC_VALVE, 0});
         sma = AddState(sma, 'Name', 'ITI_rinseAndVacStart', ...
             'Timer', valveRinseTime,...
             'StateChangeConditions', {'Tup', 'ITI_endRinse'},...
             'OutputActions',{center_port.DOOR, expV.UP, expV.VAC_VALVE, 1, 'ValveModule1', ['O' expV.RINSE_VALVE], ...
             'GlobalTimerTrig', expV.ITI_TIMER_ID});
         sma = AddState(sma, 'Name', 'ITI_endRinse', ...
-            'Timer', 0.25,...
+            'Timer', 0,...
             'StateChangeConditions', {'Tup', 'ITI_startStimLoad'},...
             'OutputActions',{center_port.DOOR, expV.UP, expV.VAC_VALVE, 1, 'ValveModule1', ['C' expV.RINSE_VALVE]});    
         sma = AddState(sma, 'Name', 'ITI_startStimLoad', ...
@@ -202,7 +196,7 @@ function testing_v3_rinseSharedChannel
             'StateChangeConditions', {'Tup', 'ITI_endStimLoad'},...
             'OutputActions',{center_port.DOOR, expV.UP, expV.VAC_VALVE, 1, 'ValveModule1', ['O' center_port.left_valve]});
         sma = AddState(sma, 'Name', 'ITI_endStimLoad', ...
-            'Timer', 1.5,...
+            'Timer', 5,...
             'StateChangeConditions', {'Tup', 'ITI_waitForRemaining', expV.itiTimeExpired, 'TTC_Center'},...
             'OutputActions',{center_port.DOOR, expV.UP, expV.VAC_VALVE, 1, 'ValveModule1', ['C' center_port.left_valve]});
         sma = AddState(sma, 'Name', 'ITI_waitForRemaining', ...
@@ -226,11 +220,11 @@ function testing_v3_rinseSharedChannel
         sma = AddState(sma, 'Name', 'openCenterValve1', ...
             'Timer', center_port.left_valve_time,...
             'StateChangeConditions', {'Tup', 'closeCenterValve1'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.left_valve]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' 2]});
         sma = AddState(sma, 'Name', 'closeCenterValve1', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'waitCenterSampleLick2'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.left_valve]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' 2]});
         sma = AddState(sma, 'Name', 'waitCenterSampleLick2', ...
             'Timer', 0,...
             'StateChangeConditions', {center_port.LEFT_LICK_INPUT, 'openCenterValve2', expV.lickTimeExpired, 'reportSkip'},...
@@ -238,11 +232,11 @@ function testing_v3_rinseSharedChannel
         sma = AddState(sma, 'Name', 'openCenterValve2', ...
             'Timer', center_port.left_valve_time,...
             'StateChangeConditions', {'Tup', 'closeCenterValve2'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.left_valve]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' 2]});
         sma = AddState(sma, 'Name', 'closeCenterValve2', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'waitCenterSampleLick3'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.left_valve]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' 2]});
         sma = AddState(sma, 'Name', 'waitCenterSampleLick3', ...
             'Timer', 0,...
             'StateChangeConditions', {center_port.LEFT_LICK_INPUT, 'openCenterValve3', expV.lickTimeExpired, 'reportSkip'},...
@@ -250,11 +244,11 @@ function testing_v3_rinseSharedChannel
         sma = AddState(sma, 'Name', 'openCenterValve3', ...
             'Timer', center_port.left_valve_time,...
             'StateChangeConditions', {'Tup', 'closeCenterValve3'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.left_valve]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' 2]});
         sma = AddState(sma, 'Name', 'closeCenterValve3', ...
             'Timer', expV.STIMULUS_WINDOW,...
             'StateChangeConditions', {'Tup', 'TTC_LateralTimeout', expV.lickTimeExpired, 'TTC_LateralTimeout'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.left_valve]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' 2]});
         
         %%%%% BEGIN TTC ON THE LATERAL PORTS %%%%%
         sma = AddState(sma, 'Name', 'TTC_LateralTimeout', ...
@@ -389,6 +383,7 @@ function testing_v3_rinseSharedChannel
             disp(['Experiment duration: ' num2str(t) 'sec.' ])
             clear elapsedTime; 
             stop_experiment(A, W);
+            ModuleWrite('ValveModule1', ['B' 0]);
             sessionSummary();
             return
         end

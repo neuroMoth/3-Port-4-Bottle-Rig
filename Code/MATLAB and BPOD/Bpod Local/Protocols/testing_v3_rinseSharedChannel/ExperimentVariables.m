@@ -1,6 +1,6 @@
 classdef ExperimentVariables 
     properties (Constant)
-        TOTAL_ALLOWED_TIME = 4000; %seconds
+        TOTAL_ALLOWED_TIME = 4500; %seconds
         ITI_TIME = 15; %seconds 
         ITI_ENDTIME = 2; %portion of ITI for the end of the trial (taken from the whole ITI duration)
         PUNISHMENT_TIME = 10; %seconds
@@ -10,8 +10,8 @@ classdef ExperimentVariables
         DELAY_TIME = 3; %seconds | delay from closing the center door to opening the lateral door
         STIMULUS_WINDOW = 50/1000; %ms after final valve closes before door goes up (if still within LICK_WINDOW)
 
-        VALVE_SET1 = [2, 3]; % Water valves
-        VALVE_SET2 = [5, 6]; % Odor valves
+        VALVE_SET1 = [3]; % Water valves
+        VALVE_SET2 = [5]; % Odor valves
         RINSE_VALVE = 7; 
         VAC_VALVE = 'BNC1'; 
         
@@ -19,8 +19,8 @@ classdef ExperimentVariables
         REWARD_VALVE_DELAY = 0; %delay from lick detection to valve opening
         
         STIM_VOLUME = 10; 
-        LOAD_VOLUME = 400; % Should be approximately 5x the dead space of the manifold (current estimate about 80ul)
-        RINSE_VOLUME = 1500; % Currently 1500ul or 1.5ml. 
+        LOAD_VOLUME = 250; % Should be approximately 5x the dead space of the manifold (current estimate about 70ul)
+        RINSE_VOLUME = 1250; % Currently 1250ul or 1.25ml. 
  
         MAXIMUM_TRIALS = 160; 
         MINIMUM_TRIALS = 160; 

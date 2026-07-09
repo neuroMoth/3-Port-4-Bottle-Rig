@@ -3,7 +3,7 @@ function [side_lineup, center_lineup, rewardLickOrder] = GenerateCenterLineup()
 rng("shuffle"); % Creates a new seed for each time to ensure independent values
 
 % --- Define parameters ---
-gellermannBlocks = load("gellermanSeries_20TrBlock_0.2altTolerance");
+gellermannBlocks = load("gellermanSeries_20TrBlock_0.1altTolerance");
 
 expV = ExperimentVariables;
 total_trials = expV.MAXIMUM_TRIALS;
