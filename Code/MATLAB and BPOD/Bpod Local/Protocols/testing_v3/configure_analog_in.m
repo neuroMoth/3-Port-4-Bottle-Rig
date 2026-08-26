@@ -10,13 +10,13 @@ function A = configure_analog_in
     % enable event reporting on AnalogInput1. This sends lick 'events' to the state machine to be processed/counted.
     [A.InputRange{1:4}] = deal('0V:5V'); % Set input range
     A.SMeventsEnabled(1:4) = 1; 
-    % This sets threshold voltages that we want to cross to generate events. Here we use 1 volt.
-    %A.Thresholds(1:4) = 1;
+    % This sets threshold voltages that we want to cross to generate events. 
+    % Here we have 2 thresholds per channel, one for lick onset (5v) and
+    % one for lick offset (1v)
     A.Thresholds = [5 5 5 5 0 0 0 0; 1 1 1 1 0 0 0 0];
-    % ResetVoltages sets the higher voltage bound that must be crossed before a
-    % new event can trigger. Here we must go above 5 volts.
-    %A.ResetVoltages(1:4) = 5;
-    A.Thresholds = [1 1 1 1 0 0 0 0; 5 5 5 5 0 0 0 0];
+    % ResetVoltages sets the voltage bound that must be crossed before a
+    % new event can be generated
+    A.ResetVoltages = [1 1 1 1 0 0 0 0; 5 5 5 5 0 0 0 0];
     % Tell the AnalogInput1 module to start reporting events to the
     % state machine
     A.startReportingEvents();

@@ -10,7 +10,9 @@ classdef ExperimentVariables
         LICK_WINDOW = 2; % time rat has to complete required amount of licks.
         DELAY_TIME = 3; % delay from closing the center door to opening the lateral door
         STIMULUS_WINDOW = 0.05; % pause after final valve closes before door goes up (if still within LICK_WINDOW)
-        GAS_TIME = 1; % time for gas purge
+        GAS_TIME = 0.5; % time for gas purge
+        GAS_DELAY = 0.1; % wait for pressure to stabilize before next valve opening
+        PRIMING_DELAY = 1; % priming slug sits stagnant before final gas clearing
 
         VALVE_SET1 = [2, 3]; % Water valves
         VALVE_SET2 = [5, 6]; % Odor valves
