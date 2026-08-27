@@ -12,10 +12,12 @@ classdef ExperimentVariables
         STIMULUS_WINDOW = 0.05; % pause after final valve closes before door goes up (if still within LICK_WINDOW)
         GAS_TIME = 0.5; % time for gas purge
         GAS_DELAY = 0.1; % wait for pressure to stabilize before next valve opening
-        PRIMING_DELAY = 1; % priming slug sits stagnant before final gas clearing
+        PRIMING_DELAY = 1; % priming slug sits stagnant before final gas clearing and stimulus loading
 
-        VALVE_SET1 = [2, 3]; % Water valves
-        VALVE_SET2 = [5, 6]; % Odor valves
+        LEFT_VALVE = 1; % left port valve
+        RIGHT_VALVE = 8; % right port valve
+        CENTER_VALVE_SET1 = [2, 3]; % Water valves
+        CENTER_VALVE_SET2 = [5, 6]; % Odor valves
         RINSE_VALVE = 7; 
         GAS_VALVE = 'BNC1'; 
         
