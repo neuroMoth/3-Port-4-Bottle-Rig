@@ -41,13 +41,11 @@ classdef ExperimentVariables
         % these varaibles are used to make door commands more intuitive and easy to understand & read.
         UP = 0;
         DOWN = 1;
-        LEFT_SPOUT = 0;
-        RIGHT_SPOUT = 1;
 
         ITI_TIMER_ID = 1; 
         LICK_WINDOW_TIMER_ID = 2;
         
-        itiTimeExpired = 'GlobalTimer1_End';
-        lickTimeExpired = 'GlobalTimer2_End';
+        ITI_TIMER_END = 'GlobalTimer1_End';
+        LICK_WINDOW_TIMER_END = 'GlobalTimer2_End';
     end
 end

@@ -13,8 +13,8 @@ maxRepeats = expV.MAX_REPEATS;
 rewardLickRange = expV.REWARD_LICKS;
 rewardDelayRange = expV.REWARD_VALVE_DELAY;
 
-valveSet1 = expV.VALVE_SET1;
-valveSet2 = expV.VALVE_SET2;
+valveSet1 = expV.CENTER_VALVE_SET1;
+valveSet2 = expV.CENTER_VALVE_SET2;
 
 num_blocks = total_trials / block_size; % = 8
 n_v1 = numel(valveSet1); n_v2 = numel(valveSet2);
