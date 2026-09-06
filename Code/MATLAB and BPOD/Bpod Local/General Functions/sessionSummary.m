@@ -92,7 +92,7 @@ function sessionSummary(animal, date)
     
     trialTypeOrder = SessionData.trialOrder.trialTypeOrder; % 1==odor, 0==water
     correctTrials = SessionData.summary.correctTrials; 
-    engagedTrials = SessionData.summary.trialsEngaged; 
+    engagedTrials = SessionData.summary.engagedTrials; 
     
     nTotalTr=length(SessionData.TrialStartTimestamp);
     nCorrectTr=sum(correctTrials==1);
