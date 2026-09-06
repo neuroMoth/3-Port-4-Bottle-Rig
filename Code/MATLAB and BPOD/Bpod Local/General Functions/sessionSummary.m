@@ -84,21 +84,39 @@ function sessionSummary(animal, date)
 
     %% Even if you can't get this function to find the right session data, you can load the .mat file and run the code below to get the info
     % Get values
+    sesCondition=SessionData.condition{:}; 
     sessionDate=SessionData.Info.SessionDate;
     sessionTime=SessionData.Info.SessionStartTime_UTC;
     sessionMinutes=round(SessionData.TrialEndTimestamp(end)/60); 
     sessionSeconds=round(rem(SessionData.TrialEndTimestamp(end),60));
+    
+    trialTypeOrder = SessionData.trialOrder.trialTypeOrder; % 1==odor, 0==water
+    correctTrials = SessionData.summary.correctTrials; 
+    engagedTrials = SessionData.summary.trialsEngaged; 
+    
     nTotalTr=length(SessionData.TrialStartTimestamp);
-    nCorrectTr=sum(SessionData.summary.correctTrials==1);
-    nEngagedTr=sum(SessionData.summary.trialsEngaged); 
-    consEstimate = (nEngagedTr*15/1000) + (nCorrectTr*20/1000); % 30ul / 1000 = 0.03ml, 40ul / 1000 = 0.04ml
+    nCorrectTr=sum(correctTrials==1);
+    nEngagedTr=sum(engagedTrials); 
+    percentCorrect = (100*round(nCorrectTr/nEngagedTr,4)); 
+    
+    stimVolume = SessionData.experimentVariables("STIM_VOLUME",:).Value{:}; 
+    consEstimate = (nEngagedTr*stimVolume*3/1000) + (nCorrectTr*stimVolume*4/1000); % currently 5ul per lick, 3 center 4 lateral
 
-    % Print to command window
+    % odor vs water trials
+    nCorrectOdor = sum(correctTrials(trialTypeOrder==1)==1); nEngagedOdor = sum(engagedTrials(trialTypeOrder==1)); 
+    nCorrectWater = sum(correctTrials(trialTypeOrder==0)==1); nEngagedWater = sum(engagedTrials(trialTypeOrder==0)); 
+    percentOdorCorrect = (100*round(nCorrectOdor/nEngagedOdor,4)); 
+    percentWaterCorrect = (100*round(nCorrectWater/nEngagedWater,4)); 
+    
+    %% Print to command window
+    fprintf('Condition: %s \n', sesCondition)
     fprintf('Date: %s   Start time: %s   ',sessionDate,sessionTime)
     fprintf('Duration: %dm %ds\n', sessionMinutes, sessionSeconds);
     fprintf('# Engaged: %d/%d. # Not engaged: %d/%d.\n', ...
         nEngagedTr,nTotalTr,nTotalTr-nEngagedTr,nTotalTr);
-    fprintf('# Correct/Engaged: %d/%d or %.2f%%.\n',nCorrectTr,nEngagedTr,(100*round(nCorrectTr/nEngagedTr,4)));
+    fprintf('# Total Correct/Engaged: %d/%d or %.2f%%.\n',nCorrectTr,nEngagedTr,percentCorrect);
+    fprintf('# Water Correct/Engaged: %d/%d or %.2f%%.\n',nCorrectWater,nEngagedWater,percentWaterCorrect);
+    fprintf('# Odor Correct/Engaged: %d/%d or %.2f%%.\n',nCorrectOdor,nEngagedOdor,percentOdorCorrect);
     fprintf('Estimated amount consumed: %.1fml.\n',consEstimate); 
     fprintf('---------------------------------------------\n'); 
 end 

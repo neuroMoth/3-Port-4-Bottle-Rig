@@ -1,4 +1,4 @@
-function [side_lineup, center_lineup, rewardLickOrder] = GenerateCenterLineup()
+function [side_lineup, center_lineup, center_drylick_lineup] = GenerateCenterLineup()
 %% --- Initialize random number generator ---
 rng("shuffle"); % Creates a new seed for each time to ensure independent values
 
@@ -10,16 +10,16 @@ total_trials = expV.MAXIMUM_TRIALS;
 block_size = expV.TRIALS_PER_BLOCK;
 maxRepeats = expV.MAX_REPEATS;
 
-rewardLickRange = expV.REWARD_LICKS;
-rewardDelayRange = expV.REWARD_VALVE_DELAY;
+dryLickRange = expV.CENTER_DRY_LICKS;
+%rewardDelayRange = expV.REWARD_VALVE_DELAY;
 
 valveSet1 = expV.CENTER_VALVE_SET1;
 valveSet2 = expV.CENTER_VALVE_SET2;
 
 num_blocks = total_trials / block_size; % = 8
 n_v1 = numel(valveSet1); n_v2 = numel(valveSet2);
-n_lickRange = numel(rewardLickRange); % = 3
-n_rewardDelay = numel(rewardDelayRange); % = 3
+n_lickRange = numel(dryLickRange); % = 3
+%n_rewardDelay = numel(rewardDelayRange); % = 3
 
 % Set threshold for valve repeats on the same side (constraint in addition to max side repeats)
 if n_v1 == 1; maxV1Rep = inf; else; maxV1Rep = 2; end
@@ -73,7 +73,7 @@ end
 % keyboard
 
 %% --- Second: Shuffle center valves, reward lick #, and delay for each trial type ---
-center_lineup = []; rewardLickOrder = []; rewardDelays = [];
+center_lineup = []; center_drylick_lineup = []; %rewardDelays = [];
 blockStep = 1:block_size:total_trials;
 
 % --- Loop through each block to create the full lineup ---
@@ -82,22 +82,22 @@ for j = 1:num_blocks
     % Each list is sampled so each element appears about equally often
     numValves1 = floor(block_size / (2*n_v1)); numValves2 = floor(block_size / (2*n_v2));
     numRewLick = floor(block_size / (2*n_lickRange));
-    numDelays = floor(block_size / (2*n_rewardDelay));
+    %numDelays = floor(block_size / (2*n_rewardDelay));
 
-    lickN_seq = repmat(rewardLickRange, 1, numRewLick);
-    extra_lickN = rewardLickRange(randperm(n_lickRange,(block_size/2)-(numRewLick*n_lickRange)));
+    lickN_seq = repmat(dryLickRange, 1, numRewLick);
+    extra_lickN = dryLickRange(randperm(n_lickRange,(block_size/2)-(numRewLick*n_lickRange)));
     lickN_seq = [lickN_seq, extra_lickN];
 
-    delay_seq = repmat(rewardDelayRange, 1, numDelays);
-    extra_delay = rewardDelayRange(randperm(n_rewardDelay,(block_size/2)-(numDelays*n_rewardDelay)));
-    delay_seq = [delay_seq, extra_delay];
+    % delay_seq = repmat(rewardDelayRange, 1, numDelays);
+    % extra_delay = rewardDelayRange(randperm(n_rewardDelay,(block_size/2)-(numDelays*n_rewardDelay)));
+    % delay_seq = [delay_seq, extra_delay];
 
     % Truncate to desired trial count
     lickN_seq = lickN_seq(1:(block_size/2));
-    delay_seq = delay_seq(1:(block_size/2));
+    %delay_seq = delay_seq(1:(block_size/2));
     % Randomly permute within each variable type
     lickN_seq = lickN_seq(randperm(numel(lickN_seq)));
-    delay_seq = delay_seq(randperm(numel(delay_seq)));
+    %delay_seq = delay_seq(randperm(numel(delay_seq)));
 
     % Check whether each valve sequence per side exceeds repeat limits
     isValidV1 = false; attemptsV1 = 0;
@@ -145,10 +145,10 @@ for j = 1:num_blocks
         % Shuffle reward lick and delays while keeping valve order fixed
         % Split each sequence to shuffle independently for each side (L/R)
         lickN_seq1 = lickN_seq(randperm(block_size/2));
-        delay_seq1 = delay_seq(randperm(block_size/2));
+        %delay_seq1 = delay_seq(randperm(block_size/2));
 
         % Combine into trial matrix
-        Trials_temp1 = [v1_seq(:), lickN_seq1(:), delay_seq1(:)];
+        Trials_temp1 = [v1_seq(:), lickN_seq1(:)];
 
         % Count repeated rows
         [~, ~, ic] = unique(Trials_temp1, 'rows');
@@ -168,10 +168,10 @@ for j = 1:num_blocks
     for k2 = 1:maxIterations
         % Shuffle reward lick and delays while keeping valve order fixed
         lickN_seq2 = lickN_seq(randperm(block_size/2));
-        delay_seq2 = delay_seq(randperm(block_size/2));
+        %delay_seq2 = delay_seq(randperm(block_size/2));
 
         % Combine into trial matrix
-        Trials_temp2 = [v2_seq(:), lickN_seq2(:), delay_seq2(:)];
+        Trials_temp2 = [v2_seq(:), lickN_seq2(:)];
 
         % Count repeated rows
         [~, ~, ic] = unique(Trials_temp2, 'rows');
@@ -189,17 +189,17 @@ for j = 1:num_blocks
     end
 
     %% USE THE SIDE LINEUP GENERATED EARLIER TO CREATE THE FULL CENTER ORDER
-    valveBlock = zeros(1, block_size); lickBlock = valveBlock; delayBlock = lickBlock;
+    valveBlock = zeros(1, block_size); lickBlock = valveBlock; %delayBlock = lickBlock;
     thisBlockSides = side_lineup(blockStep(j):(blockStep(j)+block_size-1));
 
     valveBlock(thisBlockSides == 0) = v1_seq; valveBlock(thisBlockSides == 1) = v2_seq;
     lickBlock(thisBlockSides == 0) = bestCombo1(:,2); lickBlock(thisBlockSides == 1) = bestCombo2(:,2);
-    delayBlock(thisBlockSides == 0) = bestCombo1(:,3); delayBlock(thisBlockSides == 1) = bestCombo2(:,3);
+    %delayBlock(thisBlockSides == 0) = bestCombo1(:,3); delayBlock(thisBlockSides == 1) = bestCombo2(:,3);
 
     % -- Append the newly shuffled block to our master list --
     center_lineup = [center_lineup, valveBlock];
-    rewardLickOrder = [rewardLickOrder, lickBlock];
-    rewardDelays = [rewardDelays, delayBlock];
+    center_drylick_lineup = [center_drylick_lineup, lickBlock];
+    %rewardDelays = [rewardDelays, delayBlock];
 end
 
 end
