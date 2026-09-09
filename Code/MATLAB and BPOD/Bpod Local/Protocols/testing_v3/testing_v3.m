@@ -31,7 +31,8 @@ function testing_v3
 
     % Organizing what to save to data structure
     BpodSystem.Data.condition = ''; 
-    BpodSystem.Data.trialOrder = [];
+    BpodSystem.Data.trialOrder = []; 
+    BpodSystem.Data.portInfo = [];
     BpodSystem.Data.summary.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.summary.engagedTrials = zeros(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.summary.correctPort = nan(expV.MAXIMUM_TRIALS, 1);
@@ -86,6 +87,11 @@ function testing_v3
     % valves for the left and right ports are assigned for the session 
     left_port = left_port.setValve(expV.LEFT_VALVE); 
     right_port = right_port.setValve(expV.RIGHT_VALVE); 
+
+    % save port properties
+    BpodSystem.Data.portInfo.port1 = left_port; 
+    BpodSystem.Data.portInfo.port2 = center_port; % center port doesn't save valve here, it is changed at the start of each trial
+    BpodSystem.Data.portInfo.port3 = right_port; 
     
     %% Get valve times for rinse and loading, and make sure the values allow for full ITI 
     valvePrimingTime = ceil(mean(GetValveTimes(expV.PRIMING_VOLUME, centerValves))*100)/100; 
