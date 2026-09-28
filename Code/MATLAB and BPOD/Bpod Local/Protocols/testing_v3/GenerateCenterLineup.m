@@ -3,7 +3,7 @@ function [side_lineup, center_lineup, center_drylick_lineup] = GenerateCenterLin
 rng("shuffle"); % Creates a new seed for each time to ensure independent values
 
 % --- Define parameters ---
-gellermannBlocks = load("gellermanSeries_20TrBlock_0.1altTolerance");
+gellermannBlocks = load("gellermanSeries_20TrBlock_0.3altTolerance");
 
 expV = ExperimentVariables;
 total_trials = expV.MAXIMUM_TRIALS;
@@ -35,7 +35,7 @@ while ~isValid
     % Select set of blocks from gellermann series
     iSessionBlocks = randperm(size(gellermannBlocks.cell, 1), num_blocks)';
     blockOrders =  gellermannBlocks.cell(iSessionBlocks, :)'; 
-    side_lineup = str2double(blockOrders(:))'; 
+    side_lineup = cell2mat(blockOrders(:))'; 
 
     % --- Loop through each block to create the full lineup ---
     % for i = 1:num_blocks

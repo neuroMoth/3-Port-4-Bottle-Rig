@@ -1,7 +1,7 @@
 classdef ExperimentVariables 
     properties (Constant)
         % All time parameters (in seconds)
-        TOTAL_ALLOWED_TIME = 4200;
+        TOTAL_ALLOWED_TIME = 3900;
         ITI_TIME = 15; 
         ITI_ENDTIME = 2; % portion of ITI for the end of the trial (subtracted from total ITI_TIME duration)
         PUNISHMENT_TIME = 10; % added to the ITI_TIME after incorrect or skipped trials
@@ -17,8 +17,9 @@ classdef ExperimentVariables
 
         LEFT_VALVE = 1; % left port valve
         RIGHT_VALVE = 8; % right port valve
-        CENTER_VALVE_SET1 = [2, 3]; % Water valves
-        CENTER_VALVE_SET2 = [5, 6]; % Odor valves
+        CENTER_VALVE_SET1 = [2]; % Water valves
+        CENTER_VALVE_SET2 = [6]; % Odor valves
+        DRIVER_VALVE = 3;
         RINSE_VALVE = 7; 
         GAS_VALVE = 'BNC1'; 
         
@@ -26,13 +27,13 @@ classdef ExperimentVariables
         
         STIM_VOLUME = 5; % stimulus in ul delivered per lick (3 licks for center, 4 licks for lateral) 
         PRIMING_VOLUME = 100; % 1x dead space of the manifold (current estimate about 100ul). For "seasoning" step. 
-        LOAD_VOLUME = 150; % 1.5x dead space of the manifold. Fills the manifold and pushes the first amount to waste. 
-        RINSE_VOLUME = 500; % 500ul (0.5ml) for each rinse round (2 rounds with gas clearing in between). 
+        LOAD_VOLUME = 200; % 2x dead space of the manifold. Fills the manifold and pushes the first amount to waste. 
+        RINSE_VOLUME = 600; % 600ul (0.6ml) for each rinse round (2 rounds with gas clearing in between). 
  
         MAXIMUM_TRIALS = 160; 
         MINIMUM_TRIALS = 160; 
         TRIALS_PER_BLOCK = 20; 
-        MAX_REPEATS = 4; 
+        MAX_REPEATS = 4; % This only applies to repeats across blocks. Within blocks, the max is 3 repeats. 
 
         %CONDITION_CODE = 'WROL'; % WROL = Water Right, Odor Left  
         %SKIPPED_TRIALS_THRESHOLD = 20; % threshold of consecutive trials skipped in a 20 trial block to end early
