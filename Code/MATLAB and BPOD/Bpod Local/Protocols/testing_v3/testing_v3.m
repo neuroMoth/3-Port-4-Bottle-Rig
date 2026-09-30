@@ -58,14 +58,14 @@ function testing_v3
     S = update_valve_open_times(S, deliveryValves, expV.STIM_VOLUME);
     
     % save delivery valve open times to session data
-    valveID = strings(size(deliveryValves)); 
-    valveStimTimes = zeros(size(deliveryValves));
+    valveID = strings(size(deliveryValves))'; 
+    valveStimTimes = zeros(size(deliveryValves))';
     for iValve = 1:length(deliveryValves)
         valveID(iValve) = ['Valve', num2str(deliveryValves(iValve))];
         time_variable_name = sprintf('open_time_%d', deliveryValves(iValve));
         valveStimTimes(iValve) = round(BpodSystem.ProtocolSettings.GUI.(time_variable_name)/1000, 4);
     end
-    BpodSystem.Data.valveTimings.valveStimTimes = table(valveID, valveStimTimes); % time in ms
+    BpodSystem.Data.valveTimings.valveStimTimes = table(valveID, valveStimTimes); % time in seconds
     
     % Get valve times for priming, loading, and rinse. 
     % Make sure the values allow for full ITI 
@@ -107,19 +107,20 @@ function testing_v3
     BpodSystem.Data.portInfo.port3 = right_port; 
     
     %% Configure analog in and waveplayer modules
-    ValveDriverModule = ConfigureValveDriver(); 
+    ValveModule = ConfigureValveModule(); % configure valve module to manage valves
     AnalogInModule = ConfigureAnalogIn(); % configure the analog in module to record and generate events
     WavePlayerModule = ConfigureWavePlayer(); % configure waveplayer module (analog out) to generate tones
 
     %% Print to command window the start of the Session
     disp(['Subject Name: ' subject]);
     disp(['Condition: ' char(SUBJECT_CONDITION_CODE)]);
-    fprintf('Date and time: %s\n', datetime("now"))
-    disp(['Valve Durations (' num2str(expV.STIM_VOLUME), 'ul): ']); 
-    for iValves=1:length(valveID); fprintf('%s=%.1fms. ', valveID(iValves), valveStimTimes(iValves)); end
-    disp(['Priming: ' num2str(expV.PRIMING_VOLUME), 'ul, ', num2str(valvePrimingTime), 's. '])
-    disp(['Load: ' num2str(expV.LOAD_VOLUME), 'ul, ', num2str(valveLoadingTime), 's. '])
-    disp(['Rinse: ' num2str(expV.RINSE_VOLUME), 'ul, ', num2str(valveRinseTime), 's per pulse (x2 pulses). '])
+    fprintf('Date and time: %s\n', datetime("now"));
+    disp(['Water valves: [', num2str(expV.CENTER_VALVE_SET1), ']. Odor valves: [', num2str(expV.CENTER_VALVE_SET2), '].']); 
+    fprintf(['Valve Durations (' num2str(expV.STIM_VOLUME), 'ul): ']); 
+    for iValves=1:length(valveID); fprintf('%s=%.1fms. ', valveID(iValves), valveStimTimes(iValves)*1000); end
+    fprintf(['\nPriming: ' num2str(expV.PRIMING_VOLUME), 'ul, ', num2str(valvePrimingTime), 's. ']);
+    fprintf(['Load: ' num2str(expV.LOAD_VOLUME), 'ul, ', num2str(valveLoadingTime), 's. ']);
+    fprintf(['Rinse: ' num2str(expV.RINSE_VOLUME), 'ul, ', num2str(valveRinseTime), 's per pulse (x2 pulses). \n']);
     
     clear elapsedTime; 
     elapsedTime; % First call of timer function to track session length
@@ -133,7 +134,7 @@ function testing_v3
         %% Get parameters for the current trial and save to variables
         BpodSystem.Status.trial  = trial;
         fprintf('Trial %d: ', trial)
-        if trial_order(trial) == 0; fprintf('Water trial. '); else; fprintf('Odor trial. '); end
+        if trial_order(trial) == 0; fprintf('Water trial. '); else; fprintf('Odor trial.  '); end
 
         center_stimulus_valve = center_stim_valve_order(trial); % Get center valve and number of dry licks for this trial
 
@@ -144,7 +145,7 @@ function testing_v3
             expV.CENTER_VALVE_SET1, expV.CENTER_VALVE_SET2, SUBJECT_CONDITION_CODE);
 
         BpodSystem.Data.summary.correctPort(trial) = correct_port.PORT;
-        disp(['Center=valve', num2str(center_stimulus_valve), '. Correct=port', num2str(correct_port.PORT)]);
+        fprintf(['Center=valve', num2str(center_stimulus_valve), '. Correct=port', num2str(correct_port.PORT),'. ']);
 
         %% Assemble the State Machine for this Trial
         sma = NewStateMachine();
@@ -376,10 +377,10 @@ function testing_v3
             AnalogInModule.scope_StartStop;
             AnalogInModule.endAcq; % Close Oscope GUI
             AnalogInModule.stopReportingEvents; % Stop sending events to state machine
-            ValveDriverModule.isOpen([0 0 0 0 0 0 0 0]); % close all valves
+            ValveModule.isOpen = zeros(1,8); % close all valves
             clear AnalogInModule
             clear WavePlayerModule
-            clear ValveDriverModule
+            clear ValveModule
             
             sessionSummary();
             return
@@ -387,12 +388,12 @@ function testing_v3
     end
 end
 
-function V = ConfigureValveDriver
+function V = ConfigureValveModule
     global BpodSystem
     
-    BpodSystem.AssertModule('ValveDriver');
+    BpodSystem.assertModule('ValveModule');
     
-    V = ValveDriverModule(BpodSystem.ModuleUSB.ValveDriver1);
+    V = ValveDriverModule(BpodSystem.ModuleUSB.ValveModule1);
 end
 
 function A = ConfigureAnalogIn

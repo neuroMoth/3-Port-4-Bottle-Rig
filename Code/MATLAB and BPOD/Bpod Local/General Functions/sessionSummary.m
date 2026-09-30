@@ -96,15 +96,15 @@ function sessionSummary(animal, date)
     
     nTotalTr=length(SessionData.TrialStartTimestamp);
     nCorrectTr=sum(correctTrials==1);
-    nEngagedTr=sum(engagedTrials); 
+    nEngagedTr=sum(engagedTrials==1); 
     percentCorrect = (100*round(nCorrectTr/nEngagedTr,4)); 
     
     stimVolume = SessionData.experimentVariables("STIM_VOLUME",:).Value{:}; 
     consEstimate = (nEngagedTr*stimVolume*3/1000) + (nCorrectTr*stimVolume*4/1000); % currently 5ul per lick, 3 center 4 lateral
 
     % odor vs water trials
-    nCorrectOdor = sum(correctTrials(trialTypeOrder==1)==1); nEngagedOdor = sum(engagedTrials(trialTypeOrder==1)); 
-    nCorrectWater = sum(correctTrials(trialTypeOrder==0)==1); nEngagedWater = sum(engagedTrials(trialTypeOrder==0)); 
+    nCorrectOdor = sum(correctTrials(trialTypeOrder==1)==1); nEngagedOdor = sum(engagedTrials(trialTypeOrder==1)==1); 
+    nCorrectWater = sum(correctTrials(trialTypeOrder==0)==1); nEngagedWater = sum(engagedTrials(trialTypeOrder==0)==1); 
     percentOdorCorrect = (100*round(nCorrectOdor/nEngagedOdor,4)); 
     percentWaterCorrect = (100*round(nCorrectWater/nEngagedWater,4)); 
     

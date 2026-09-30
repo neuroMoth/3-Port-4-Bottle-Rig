@@ -26,9 +26,7 @@ function [waterValves, odorValves] = currentDayConditions
     waterValves = columns(~condRotation); 
     odorValves = columns(condRotation); 
     
-    fprintf('Conditions for %s\n',datetime("today")); 
-    disp(['Water valves: ', num2str(waterValves)]); 
-    disp(['Odor valves: ', num2str(odorValves)]);
+    %disp(['Water valves: [', num2str(waterValves), '] Odor valves: [', num2str(odorValves), ']']); 
 end
 
 function condRotation = conditionsForDay(dayNum, N)
