@@ -1,6 +1,6 @@
 % TVD - This class assigns the information from each of the lateral ports to the correct or incorrect port instances
 
-classdef PortHandler
+classdef PortTrialManager
     properties
         PORT; % port number (1 = LEFT, 3 = RIGHT)
         
@@ -17,6 +17,8 @@ classdef PortHandler
 
     methods
         function obj = setCorrect(obj, port_1_inst, port_3_inst, center_valve, stim1Valves, stim2Valves, conditionCode)
+            if port_1_inst.PORT ~= 1 || port_3_inst.PORT ~= 3; error('Port instances are incompatible. '); end
+            
             valveSet1 = num2cell(stim1Valves); 
             valveSet2 = num2cell(stim2Valves);
             
@@ -24,21 +26,23 @@ classdef PortHandler
             if strcmp(conditionCode, 'WLOR')
                 switch center_valve
                     case valveSet1
-                        obj = obj.setProperties(1, port_1_inst); % correct is port 1 (left)
+                        obj = obj.setProperties(port_1_inst); % correct is port 1 (left)
                     case valveSet2
-                        obj = obj.setProperties(3, port_3_inst);
+                        obj = obj.setProperties(port_3_inst);
                 end
             elseif strcmp(conditionCode, 'WROL')
                 switch center_valve
                     case valveSet1
-                        obj = obj.setProperties(3, port_3_inst); % correct is port 3 (right)
+                        obj = obj.setProperties(port_3_inst); % correct is port 3 (right)
                     case valveSet2
-                        obj = obj.setProperties(1, port_1_inst);
+                        obj = obj.setProperties(port_1_inst);
                 end
             end
         end
         
         function obj = setIncorrect(obj, port_1_inst, port_3_inst, center_valve, stim1Valves, stim2Valves, conditionCode)
+            if port_1_inst.PORT ~= 1 || port_3_inst.PORT ~= 3; error('Port instances are incompatible. '); end
+            
             valveSet1 = num2cell(stim1Valves); 
             valveSet2 = num2cell(stim2Valves);
             
@@ -46,16 +50,16 @@ classdef PortHandler
             if strcmp(conditionCode, 'WROL')
                 switch center_valve
                     case valveSet1
-                        obj = obj.setProperties(1, port_1_inst); % incorrect is port 1 (left)
+                        obj = obj.setProperties(port_1_inst); % incorrect is port 1 (left)
                     case valveSet2
-                        obj = obj.setProperties(3, port_3_inst);
+                        obj = obj.setProperties(port_3_inst);
                 end
             elseif strcmp(conditionCode, 'WLOR')
                 switch center_valve
                     case valveSet1
-                        obj = obj.setProperties(3, port_3_inst); % incorrect is port 3 (right)
+                        obj = obj.setProperties(port_3_inst); % incorrect is port 3 (right)
                     case valveSet2
-                        obj = obj.setProperties(1, port_1_inst);
+                        obj = obj.setProperties(port_1_inst);
                 end
             end
         end
@@ -63,18 +67,20 @@ classdef PortHandler
         function obj = switchPort(obj, port_1_inst, port_3_inst)
             % function that takes in the current port on an incorrect_port OR correct_port instance
             % and fills the information with the opposite port
+            
+            if port_1_inst.PORT ~= 1 || port_3_inst.PORT ~= 3; error('Port instances are incompatible. '); end
+            
             if (obj.PORT == 1)
-                obj = obj.setProperties(3, port_3_inst); % switch to port 3 attributes
+                obj = obj.setProperties(port_3_inst); % switch to port 3 attributes
             elseif (obj.PORT == 3)
-                obj = obj.setProperties(1, port_1_inst); % switch to port 1 attributes
+                obj = obj.setProperties(port_1_inst); % switch to port 1 attributes
             end
         end
     end
 
     methods (Access = private)
-        function obj = setProperties(obj, port_number, port_instance)
-            global BpodSystem
-            obj.PORT = port_number;
+        function obj = setProperties(obj, port_instance)
+            obj.PORT = port_instance.PORT;
             
             obj.LICK_ONSET = port_instance.LICK_ONSET;
             obj.LICK_OFFSET = port_instance.LICK_OFFSET;
@@ -83,8 +89,7 @@ classdef PortHandler
             obj.DOOR= port_instance.DOOR;
 
             obj.VALVE = port_instance.VALVE;
-            time_variable_name = sprintf('open_time_%d', obj.VALVE);
-            obj.VALVE_TIME = BpodSystem.ProtocolSettings.GUI.(time_variable_name)/1000;
+            obj.VALVE_TIME = port_instance.VALVE_TIME;
         end
     end
 end

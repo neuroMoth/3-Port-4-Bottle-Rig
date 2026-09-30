@@ -1,69 +1,81 @@
 % Original code written by Blake Hourigan for Samuelsen Lab, Univeristy of Louisville----
-% V2 code edited/written by Timothy Vladimir Dong for Samuelsen Lab, Univeristy of Louisville----
+% V2 code and beyond edited/written by Timothy Vladimir Dong for Samuelsen Lab, Univeristy of Louisville----
 
-%% TESTING PROTOCOL V3.5 | 2 OPERANT RESPONSE TASK
-% V3.5 Update description: This protocol is used with a center spout connected to a multi-channel manifold with a rinse
-% and a gas line. The inside of the spout only contains a single shared channel for all stimuli. Stimuli are loaded 
-% from the manifold and rinsed out with Nitrogen gas and water. Rinse and waste stimuli are cleared by a waste vacuum 
+%% TESTING PROTOCOL V3.6 | 2 OPERANT RESPONSE TASK
+% This protocol is used with a center spout connected to a multi-channel manifold with a rinse and a gas line. 
+% The inside of the spout only contains a single shared channel for all stimuli. Stimuli are loaded 
+% from the manifold and rinsed out with gas and water. Rinse and waste stimuli are cleared by a waste vacuum 
 % positioned in front of the spout. 
-
-% Stimulus valves should be calibrated for 5ul pulses when delivering stimuli, with an additional measurement around 
-% 500ms to calibrate the longer preloading pulse (the preloading duration will be averaged across valves). 
+% 
+% Lateral and center driver valves should be calibrated for 5ul pulses in ~70ms for delivering stimuli.  
+% Stimulus and rinse valves should be calibrated for 100-600ul pulses in ~1000-3000ms for stimulus loading and rinse.  
+% 
+% V3.6 Update: all stimuli at the center port are delivered using a single "Driver" valve. Cleaning up code layout. 
 
 function testing_v3
     
     global BpodSystem % Imports the BpodSystem object to the function workspace
 
-    %% SET UP SESSION
+    %% SESSION SETUP
     expV = ExperimentVariables(); %expV is used to access experiment constants
 
-    % Setup for wave player
-    Fs = 44100;    % Sampling rate in Hz (e.g., CD quality)
-    T = .5;         % Duration in seconds
-    f = 800;       % Frequency of the tone in Hz
-    t = 0:1/Fs:T; % Generate the time vector
-    y = sin(2*pi*f*t); % Generate the sinusoidal waveform
-
     BpodSystem.Status.trial = 1;
-    BpodSystem.Status.consecutiveRatSkips = 0;
     BpodSystem.Status.ExitTrialLoop = false; % session end 
-    BpodSystem.Status.switchStimulusFlag = false; % used to indicate when middle stimulus should switch (for alternation). 
+    BpodSystem.Status.switchStimulusFlag = false; % used to indicate when middle stimulus should switch (for alternation training only). 
 
     % Organizing what to save to data structure
     BpodSystem.Data.condition = ''; 
     BpodSystem.Data.trialOrder = []; 
     BpodSystem.Data.portInfo = [];
     BpodSystem.Data.summary.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
-    BpodSystem.Data.summary.engagedTrials = zeros(expV.MAXIMUM_TRIALS, 1);
+    BpodSystem.Data.summary.engagedTrials = nan(expV.MAXIMUM_TRIALS, 1);
     BpodSystem.Data.summary.correctPort = nan(expV.MAXIMUM_TRIALS, 1);
-
+    
+    % Generating trial order (determines each trial type)
+    [trial_order, center_stim_valve_order] = GenerateTrialOrder();
+    BpodSystem.Data.trialOrder.trialTypeOrder = trial_order; 
+    BpodSystem.Data.trialOrder.centerValveOrder = center_stim_valve_order;
+    
     % Saving ExperimentVariables
     propNames = properties(expV); propValues = cell(size(propNames));
     for i = 1:numel(propNames); propValues{i} = expV.(propNames{i}); end
     expVarTable = cell2table(propValues,'RowNames', propNames, 'VariableNames', {'Value'}); % Convert to table
     BpodSystem.Data.experimentVariables = expVarTable; % Save table to structure
 
-    % Generating lineup and jitter for valve openings
-    [trial_order, center_port_valve_lineup, center_drylick_lineup] = GenerateCenterLineup();
-    BpodSystem.Data.trialOrder.trialTypeOrder = trial_order; 
-    BpodSystem.Data.trialOrder.centerValve = center_port_valve_lineup;
-    BpodSystem.Data.trialOrder.centerDryLicks = center_drylick_lineup; 
-
-    %% LOAD and UPDATE ProtocolSettings
+    %% LOAD and UPDATE ProtocolSettings and Get Valve Timings
     S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
-    subj = BpodSystem.GUIData.SubjectName;
+    subject = BpodSystem.GUIData.SubjectName;
     if isempty(S) || isempty(fieldnames(S)) % If running this protocol for the first time with this subject, or if settings cannot be found
-        dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\',subj,'\Set_exp_parameters\Session Settings\DefaultSettings.mat'];
+        dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\',subject,'\Set_exp_parameters\Session Settings\DefaultSettings.mat'];
         temp = load(dir);
         S = temp.ProtocolSettings; clear temp;
-        
         BpodSystem.ProtocolSettings = S;
     end
-
-    % UPDATE valve open times for parameter sheet
-    centerValves = [expV.CENTER_VALVE_SET1, expV.CENTER_VALVE_SET2]; 
-    S = update_valve_open_times(S, [expV.LEFT_VALVE, centerValves, expV.DRIVER_VALVE, expV.RINSE_VALVE, expV.RIGHT_VALVE], expV.STIM_VOLUME);
     
+    % UPDATE valve open times
+    deliveryValves = sort([expV.LEFT_VALVE, expV.CENTER_DRIVER_VALVE, expV.RIGHT_VALVE]); % Valves for delivering stimuli
+    centerStimValves = [expV.CENTER_VALVE_SET1, expV.CENTER_VALVE_SET2]; % Valves for loading center port stimuli
+    S = update_valve_open_times(S, deliveryValves, expV.STIM_VOLUME);
+    
+    % save delivery valve open times to session data
+    valveID = strings(size(deliveryValves)); 
+    valveStimTimes = zeros(size(deliveryValves));
+    for iValve = 1:length(deliveryValves)
+        valveID(iValve) = ['Valve', num2str(deliveryValves(iValve))];
+        time_variable_name = sprintf('open_time_%d', deliveryValves(iValve));
+        valveStimTimes(iValve) = round(BpodSystem.ProtocolSettings.GUI.(time_variable_name)/1000, 4);
+    end
+    BpodSystem.Data.valveTimings.valveStimTimes = table(valveID, valveStimTimes); % time in ms
+    
+    % Get valve times for priming, loading, and rinse. 
+    % Make sure the values allow for full ITI 
+    valvePrimingTime = round(mean(GetValveTimes(expV.PRIMING_VOLUME, centerStimValves)),3); 
+    valveLoadingTime = round(mean(GetValveTimes(expV.LOAD_VOLUME, centerStimValves)),3); 
+    valveRinseTime = round(GetValveTimes(expV.RINSE_VOLUME, expV.RINSE_VALVE),3); 
+    if (expV.ITI_TIME - expV.ITI_ENDTIME) < (valvePrimingTime + valveLoadingTime + (2*valveRinseTime) + (4*expV.GAS_TIME) + 1)
+        error('Error: calibration values for rinse and preloading are incompatible with this protocol. '); 
+    end
+
     % Save protocol settings (after updating valve timings)
     BpodSystem.ProtocolSettings = S;
     SaveProtocolSettings(BpodSystem.ProtocolSettings)
@@ -71,65 +83,43 @@ function testing_v3
     BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
 
     % GET CONDITION FOR CURRENT SUBJECT
-    conditions = S.GUIMeta.CONDITION_CODE.String;
-    if ~any(contains(conditions, "null")); error('Error: no condition selected for this subject. '); end
-    SUBJECT_CONDITION_CODE = conditions(~contains(conditions, "null")); 
+    condition = S.GUIMeta.CONDITION_CODE.String;
+    if ~any(contains(condition, "null")); error('Error: no condition selected for this subject. '); end
+    SUBJECT_CONDITION_CODE = condition(~contains(condition, "null")); 
     BpodSystem.Data.condition = SUBJECT_CONDITION_CODE;
     
     %% Generate port instances
-    left_port = Port(1); % port_1 is the instance of the class Port which holds LEFT port info
-    center_port = Port(2); % port_2 is the instance of the class Port which holds CENTER port info
-    right_port = Port(3); % port_3 is the instance of the class Port which holds RIGHT port info
+    % port 1 = LEFT, port 2 = CENTER, port 3 = RIGHT
     
-    correct_port = PortHandler; % correct_port gets the info of one of the lateral ports each trial
-    incorrect_port = PortHandler; % incorrect_port gets the info of the other lateral port each trial
+    % Instances of each port class are constant throughout the session. 
+    left_port = Port(1, expV.LEFT_VALVE, valveStimTimes(deliveryValves == expV.LEFT_VALVE)); 
+    center_port = Port(2, expV.CENTER_DRIVER_VALVE, valveStimTimes(deliveryValves == expV.CENTER_DRIVER_VALVE)); 
+    right_port = Port(3, expV.RIGHT_VALVE, valveStimTimes(deliveryValves == expV.RIGHT_VALVE)); 
     
-    % valves for the left and right ports are assigned for the session 
-    left_port = left_port.setValve(expV.LEFT_VALVE); 
-    right_port = right_port.setValve(expV.RIGHT_VALVE); 
+    % Instances of the PortMaster class receive the properties of the left or right ports according to the trial. 
+    % This determines which port is correct or incorrect for each trial. 
+    correct_port = PortTrialManager; 
+    incorrect_port = PortTrialManager; 
 
     % save port properties
     BpodSystem.Data.portInfo.port1 = left_port; 
-    BpodSystem.Data.portInfo.port2 = center_port; % center port doesn't save valve here, it is changed at the start of each trial
+    BpodSystem.Data.portInfo.port2 = center_port; 
     BpodSystem.Data.portInfo.port3 = right_port; 
     
-    %% Get valve times for rinse and loading, and make sure the values allow for full ITI 
-    valvePrimingTime = ceil(mean(GetValveTimes(expV.PRIMING_VOLUME, centerValves))*100)/100; 
-    valveLoadingTime = ceil(mean(GetValveTimes(expV.LOAD_VOLUME, centerValves))*100)/100; 
-    valveRinseTime = ceil(GetValveTimes(expV.RINSE_VOLUME, expV.RINSE_VALVE)*100)/100; 
-    valveDriverTime = ceil(GetValveTimes(expV.STIM_VOLUME, expV.DRIVER_VALVE)*10000)/10000; 
-    if (expV.ITI_TIME - expV.ITI_ENDTIME) < (valvePrimingTime + valveLoadingTime + (2*valveRinseTime) + (4*expV.GAS_TIME) + 1)
-        error('Error: calibration values for rinse and preloading are incompatible with this protocol. '); 
-    end
-    
-    % save valve open times to session data
-    valveID = ["Valve1"; "Valve2"; "Valve3"; "Valve4"; "Valve5"; "Valve6"; "Valve7"; "Valve8"];
-    valveOpenTimes = [BpodSystem.ProtocolSettings.GUI.open_time_1; BpodSystem.ProtocolSettings.GUI.open_time_2; ...
-        BpodSystem.ProtocolSettings.GUI.open_time_3; BpodSystem.ProtocolSettings.GUI.open_time_4; ...
-        BpodSystem.ProtocolSettings.GUI.open_time_5; BpodSystem.ProtocolSettings.GUI.open_time_6; 
-        BpodSystem.ProtocolSettings.GUI.open_time_7; BpodSystem.ProtocolSettings.GUI.open_time_8];
-    BpodSystem.Data.valveTimings.valveStimTimes = table(valveID, valveOpenTimes); % time in ms
-    
     %% Configure analog in and waveplayer modules
-    A = ConfigureAnalogIn(); % configure the analog in module. performed in ConfigureAnalogIn.m
-
-    % Set up wave player
-    W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1);
-    W.SamplingRate = Fs;
-    W.loadWaveform(1, y); % Loads a sound as waveform 1
+    ValveDriverModule = ConfigureValveDriver(); 
+    AnalogInModule = ConfigureAnalogIn(); % configure the analog in module to record and generate events
+    WavePlayerModule = ConfigureWavePlayer(); % configure waveplayer module (analog out) to generate tones
 
     %% Print to command window the start of the Session
-    disp(['Subject Name: ' subj]);
+    disp(['Subject Name: ' subject]);
     disp(['Condition: ' char(SUBJECT_CONDITION_CODE)]);
-    fprintf('Date and time: %s\n',datetime("now"))
-    fprintf(['Valve Durations (' num2str(expV.STIM_VOLUME), 'ul): ']); 
-    for iValves=1:length(valveID); fprintf('%s=%.1fms. ', num2str(iValves), valveOpenTimes(iValves)); end
-    fprintf(['\nDriver: valve ', num2str(expV.DRIVER_VALVE), ' - open for ', num2str(valveDriverTime), 's. '])
-    fprintf(['\nPriming: ' num2str(expV.PRIMING_VOLUME), 'ul, ', num2str(valvePrimingTime), 's. '])
-    fprintf(['Load: ' num2str(expV.LOAD_VOLUME), 'ul, ', num2str(valveLoadingTime), 's. '])
-    fprintf(['Rinse: ' num2str(expV.RINSE_VOLUME), 'ul, ', num2str(valveRinseTime), 's per pulse (x2 pulses). '])
-    fprintf(['Gas: ' num2str(expV.GAS_TIME), 's per gas pulse. '])
-    fprintf('\n')
+    fprintf('Date and time: %s\n', datetime("now"))
+    disp(['Valve Durations (' num2str(expV.STIM_VOLUME), 'ul): ']); 
+    for iValves=1:length(valveID); fprintf('%s=%.1fms. ', valveID(iValves), valveStimTimes(iValves)); end
+    disp(['Priming: ' num2str(expV.PRIMING_VOLUME), 'ul, ', num2str(valvePrimingTime), 's. '])
+    disp(['Load: ' num2str(expV.LOAD_VOLUME), 'ul, ', num2str(valveLoadingTime), 's. '])
+    disp(['Rinse: ' num2str(expV.RINSE_VOLUME), 'ul, ', num2str(valveRinseTime), 's per pulse (x2 pulses). '])
     
     clear elapsedTime; 
     elapsedTime; % First call of timer function to track session length
@@ -143,32 +133,29 @@ function testing_v3
         %% Get parameters for the current trial and save to variables
         BpodSystem.Status.trial  = trial;
         fprintf('Trial %d: ', trial)
+        if trial_order(trial) == 0; fprintf('Water trial. '); else; fprintf('Odor trial. '); end
 
-        % Get center valve and number of dry licks for this trial
-        center_stimulus_valve = center_port_valve_lineup(trial); 
-        num_dryLicks = center_drylick_lineup(trial);
+        center_stimulus_valve = center_stim_valve_order(trial); % Get center valve and number of dry licks for this trial
 
         % Set center valve and correct port -> WHERE CORRECT CHOICE IS DEFINED
-        center_port = center_port.setValve(center_stimulus_valve);
         correct_port = correct_port.setCorrect(left_port, right_port, center_stimulus_valve, ...
             expV.CENTER_VALVE_SET1, expV.CENTER_VALVE_SET2, SUBJECT_CONDITION_CODE);
         incorrect_port = incorrect_port.setIncorrect(left_port, right_port, center_stimulus_valve, ...
             expV.CENTER_VALVE_SET1, expV.CENTER_VALVE_SET2, SUBJECT_CONDITION_CODE);
 
         BpodSystem.Data.summary.correctPort(trial) = correct_port.PORT;
-        fprintf('Center=valve%d. DryLicks=%d. ', center_stimulus_valve, num_dryLicks);
-        fprintf('Correct=port%d. ', correct_port.PORT); %fprintf('Incorrect=port%d. ', incorrect_port.PORT);
+        disp(['Center=valve', num2str(center_stimulus_valve), '. Correct=port', num2str(correct_port.PORT)]);
 
         %% Assemble the State Machine for this Trial
         sma = NewStateMachine();
 
         % set global timers for the maximum duration of the experiment and the maximum sample time of 2 seconds.
         sma = SetGlobalTimer(sma, 'TimerID', expV.ITI_TIMER_ID, 'Duration', (expV.ITI_TIME - expV.ITI_ENDTIME) );
-        sma = SetGlobalTimer(sma, 'TimerID', expV.LICK_WINDOW_TIMER_ID, 'Duration', expV.LICK_WINDOW); % 2 seconds to get all dry licks
+        sma = SetGlobalTimer(sma, 'TimerID', expV.LICK_WINDOW_TIMER_ID, 'Duration', expV.LICK_WINDOW); % 2 seconds to get all licks
 
         % set global counters for each of the possible input ports (AnalogIn1 ports 1-3). 
         sma = SetGlobalCounter(sma, left_port.COUNTER_ID, left_port.LICK_ONSET, 3);
-        sma = SetGlobalCounter(sma, center_port.COUNTER_ID, center_port.LICK_ONSET, num_dryLicks); 
+        sma = SetGlobalCounter(sma, center_port.COUNTER_ID, center_port.LICK_ONSET, 3); 
         sma = SetGlobalCounter(sma, right_port.COUNTER_ID, right_port.LICK_ONSET, 3);
 
         %% Adding States
@@ -214,11 +201,11 @@ function testing_v3
         sma = AddState(sma, 'Name', 'ITI_stimPriming', ...
             'Timer', valvePrimingTime,...
             'StateChangeConditions', {'Tup', 'ITI_stimPrimingDelay'},...
-            'OutputActions',{center_port.DOOR, expV.UP, expV.GAS_VALVE, 0, 'ValveModule1', ['O' center_port.VALVE]});
+            'OutputActions',{center_port.DOOR, expV.UP, expV.GAS_VALVE, 0, 'ValveModule1', ['O' center_stimulus_valve]});
          sma = AddState(sma, 'Name', 'ITI_stimPrimingDelay', ...
             'Timer', expV.PRIMING_DELAY,...
             'StateChangeConditions', {'Tup', 'ITI_gasClear4'},...
-            'OutputActions',{center_port.DOOR, expV.UP, expV.GAS_VALVE, 0, 'ValveModule1', ['C' center_port.VALVE]});
+            'OutputActions',{center_port.DOOR, expV.UP, expV.GAS_VALVE, 0, 'ValveModule1', ['C' center_stimulus_valve]});
         sma = AddState(sma, 'Name', 'ITI_gasClear4', ...
             'Timer', expV.GAS_TIME,...
             'StateChangeConditions', {'Tup', 'ITI_gasDelay4'},...
@@ -230,11 +217,11 @@ function testing_v3
         sma = AddState(sma, 'Name', 'ITI_stimLoad', ...
             'Timer', valveLoadingTime,...
             'StateChangeConditions', {'Tup', 'ITI_waitForRemaining'},...
-            'OutputActions',{center_port.DOOR, expV.UP, expV.GAS_VALVE, 0, 'ValveModule1', ['O' center_port.VALVE]});
+            'OutputActions',{center_port.DOOR, expV.UP, expV.GAS_VALVE, 0, 'ValveModule1', ['O' center_stimulus_valve]});
         sma = AddState(sma, 'Name', 'ITI_waitForRemaining', ...
             'Timer', 0,...
             'StateChangeConditions', {expV.ITI_TIMER_END, 'TTC_Center'},...
-            'OutputActions',{center_port.DOOR, expV.UP, 'ValveModule1', ['C' center_port.VALVE], ...
+            'OutputActions',{center_port.DOOR, expV.UP, 'ValveModule1', ['C' center_stimulus_valve], ...
             'GlobalCounterReset', center_port.COUNTER_ID});
         
         %%%%% TRIAL START %%%%%
@@ -251,37 +238,37 @@ function testing_v3
             'StateChangeConditions', {center_port.LICK_OFFSET, 'openCenterValve1', expV.LICK_WINDOW_TIMER_END, 'reportSkip'},...
             'OutputActions',{center_port.DOOR, expV.DOWN});
         sma = AddState(sma, 'Name', 'openCenterValve1', ...
-            'Timer', valveDriverTime,...
+            'Timer', center_port.VALVE_TIME,...
             'StateChangeConditions', {'Tup', 'closeCenterValve1'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' expV.DRIVER_VALVE]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.VALVE]});
         sma = AddState(sma, 'Name', 'closeCenterValve1', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'waitCenterSampleLick2'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' expV.DRIVER_VALVE]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.VALVE]});
         sma = AddState(sma, 'Name', 'waitCenterSampleLick2', ...
             'Timer', 0,...
             'StateChangeConditions', {center_port.LICK_OFFSET, 'openCenterValve2', expV.LICK_WINDOW_TIMER_END, 'reportSkip'},...
             'OutputActions',{center_port.DOOR, expV.DOWN});
         sma = AddState(sma, 'Name', 'openCenterValve2', ...
-            'Timer', valveDriverTime,...
+            'Timer', center_port.VALVE_TIME,...
             'StateChangeConditions', {'Tup', 'closeCenterValve2'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' expV.DRIVER_VALVE]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.VALVE]});
         sma = AddState(sma, 'Name', 'closeCenterValve2', ...
             'Timer', 0,...
             'StateChangeConditions', {'Tup', 'waitCenterSampleLick3'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' expV.DRIVER_VALVE]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.VALVE]});
         sma = AddState(sma, 'Name', 'waitCenterSampleLick3', ...
             'Timer', 0,...
             'StateChangeConditions', {center_port.LICK_OFFSET, 'openCenterValve3', expV.LICK_WINDOW_TIMER_END, 'reportSkip'},...
             'OutputActions',{center_port.DOOR, expV.DOWN});
         sma = AddState(sma, 'Name', 'openCenterValve3', ...
-            'Timer', valveDriverTime,...
+            'Timer', center_port.VALVE_TIME,...
             'StateChangeConditions', {'Tup', 'closeCenterValve3'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' expV.DRIVER_VALVE]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['O' center_port.VALVE]});
         sma = AddState(sma, 'Name', 'closeCenterValve3', ...
             'Timer', expV.STIMULUS_WINDOW,...
             'StateChangeConditions', {'Tup', 'TTC_LateralTimeout', expV.LICK_WINDOW_TIMER_END, 'TTC_LateralTimeout'},...
-            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' expV.DRIVER_VALVE]});
+            'OutputActions',{center_port.DOOR, expV.DOWN, 'ValveModule1', ['C' center_port.VALVE]});
         
         %%%%% BEGIN TTC ON THE LATERAL PORTS %%%%%
         sma = AddState(sma, 'Name', 'TTC_LateralTimeout', ...
@@ -332,18 +319,6 @@ function testing_v3
             'OutputActions',{left_port.DOOR, expV.DOWN, right_port.DOOR, expV.DOWN, 'ValveModule1', ['O', correct_port.VALVE]});
         sma = AddState(sma, 'Name', 'closeCorrectValve3', ...
             'Timer', 0,...
-            'StateChangeConditions', {'Tup', 'waitLateralRewardLick4'},...
-            'OutputActions',{left_port.DOOR, expV.DOWN, right_port.DOOR, expV.DOWN, 'ValveModule1', ['C', correct_port.VALVE]});
-        sma = AddState(sma, 'Name', 'waitLateralRewardLick4', ...
-            'Timer', 0,...
-            'StateChangeConditions', {correct_port.LICK_OFFSET, 'openCorrectValve4', expV.LICK_WINDOW_TIMER_END, 'reportSkip'},...
-            'OutputActions',{left_port.DOOR, expV.DOWN, right_port.DOOR, expV.DOWN});
-        sma = AddState(sma, 'Name', 'openCorrectValve4', ...
-            'Timer', correct_port.VALVE_TIME,...
-            'StateChangeConditions', {'Tup', 'closeCorrectValve4'},...
-            'OutputActions',{left_port.DOOR, expV.DOWN, right_port.DOOR, expV.DOWN, 'ValveModule1', ['O', correct_port.VALVE]});
-        sma = AddState(sma, 'Name', 'closeCorrectValve4', ...
-            'Timer', expV.STIMULUS_WINDOW,...
             'StateChangeConditions', {'Tup', 'ITI_correctTrialEnd', expV.LICK_WINDOW_TIMER_END, 'ITI_correctTrialEnd'},...
             'OutputActions',{left_port.DOOR, expV.DOWN, right_port.DOOR, expV.DOWN, 'ValveModule1', ['C', correct_port.VALVE]});
         sma = AddState(sma, 'Name', 'waitFinalIncorrectLick', ...
@@ -376,15 +351,6 @@ function testing_v3
             'OutputActions',{left_port.DOOR, expV.UP, right_port.DOOR, expV.UP, 'ValveModule1', ['B' 0], expV.GAS_VALVE, 0});
         
         %%%%% TRIAL END %%%%%
-        
-        %%%%% SESSION END %%%%%
-        % sma = AddState(sma, 'Name', 'cleanup', ...
-        %     'Timer', 0,...
-        %     'StateChangeConditions', {'Tup', 'exit'},...
-        %     'OutputActions',{port_1.DOOR, expV.UP, port_3.DOOR, expV.UP, 'ValveModule1', ['B' 00000000], 'BNC1', 0, ...
-        %     'SoftCode', 1});
-        % function will check if softcode '1' has been sent by the state machine in cleanup state. 
-        % if it has, it is time to exit the trial loop (end of session).
 
         BpodSystem.SoftCodeHandlerFunction = 'SoftCodeHandler';
 
@@ -405,11 +371,74 @@ function testing_v3
         t = elapsedTime; 
         if (BpodSystem.Status.ExitTrialLoop || BpodSystem.Status.BeingUsed == 0 || trial == expV.MAXIMUM_TRIALS || t > expV.TOTAL_ALLOWED_TIME)
             disp(['Experiment duration: ' num2str(t) 'sec.' ])
-            clear elapsedTime; 
-            stop_experiment(A, W);
-            ModuleWrite('ValveModule1', ['B' 0]);
+            clear elapsedTime;
+            
+            AnalogInModule.scope_StartStop;
+            AnalogInModule.endAcq; % Close Oscope GUI
+            AnalogInModule.stopReportingEvents; % Stop sending events to state machine
+            ValveDriverModule.isOpen([0 0 0 0 0 0 0 0]); % close all valves
+            clear AnalogInModule
+            clear WavePlayerModule
+            clear ValveDriverModule
+            
             sessionSummary();
             return
         end
     end
+end
+
+function V = ConfigureValveDriver
+    global BpodSystem
+    
+    BpodSystem.AssertModule('ValveDriver');
+    
+    V = ValveDriverModule(BpodSystem.ModuleUSB.ValveDriver1);
+end
+
+function A = ConfigureAnalogIn
+    global BpodSystem
+
+    BpodSystem.assertModule('AnalogIn', 1); % Assert Analog Input module is present + USB-paired (via USB button on console GUI)
+
+    A = BpodAnalogIn(BpodSystem.ModuleUSB.AnalogIn1);
+    
+    A.SamplingRate = 5000; % Set the sampling rate to 5kHz
+    A.nActiveChannels = 3;
+    % enable event reporting on AnalogInput1. This sends lick 'events' to the state machine to be processed/counted.
+    [A.InputRange{1:3}] = deal('0V:5V'); % Set input range
+    A.SMeventsEnabled(1:3) = 1; 
+    % This sets threshold voltages that we want to cross to generate events. 
+    % Here we have 2 thresholds per channel, the first one for lick onset (5v) and the second for lick offset (1v)
+    A.Thresholds = [5 5 5 5 0 0 0 0; 1 1 1 1 0 0 0 0];
+    % ResetVoltages sets the voltage bound that must be crossed before a new event can be generated
+    A.ResetVoltages = [1 1 1 1 0 0 0 0; 5 5 5 5 0 0 0 0];
+    % Tell the AnalogInput1 module to start reporting events to the
+    % state machine
+    A.startReportingEvents();
+    % View all channels by default - added by TVD 10/11/2025
+    A.Stream2USB(1:3) = 1;
+    
+    %behaviorDataFile = BpodSystem.Path.CurrentDataFile;
+    %A.USBStreamFile = [behaviorDataFile(1:end-4) '_Alg.mat']; % Set datafile for analog data captured in this session
+    
+    % start the oscilliscope.
+    A.scope();
+    A.scope_StartStop;
+end
+
+function W = ConfigureWavePlayer
+    global BpodSystem
+    
+    % Variables for wave player
+    Fs = 44100;    % Sampling rate in Hz (e.g., CD quality)
+    T = .5;         % Duration in seconds
+    f = 800;       % Frequency of the tone in Hz
+    t = 0:1/Fs:T; % Generate the time vector
+    y = sin(2*pi*f*t); % Generate the sinusoidal waveform
+    
+    BpodSystem.assertModule('WavePlayer', 1);
+    
+    W = BpodWavePlayer(BpodSystem.ModuleUSB.WavePlayer1);
+    W.SamplingRate = Fs;
+    W.loadWaveform(1, y); % Loads a sound as waveform 1
 end

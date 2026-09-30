@@ -4,6 +4,8 @@
 
 classdef Port
     properties
+        PORT; % port number (1 = LEFT, 2 = CENTER, 3 = RIGHT)
+        
         VALVE; % valve assigned to the port (for the center port (port 2) this is changed every trial
         VALVE_TIME; % changed to match the current assigned valve
 
@@ -15,9 +17,14 @@ classdef Port
         COUNTER_EVENT; % event that triggers when the counter threshold is reached
     end
     
-    methods % 2 methods: declaration of each port and setting the valves
-        function obj = Port(portNumber) % Declaring each port and assigning appropriate events and commands
-            
+    methods 
+        function obj = Port(portNumber, valve_number, valve_timing) % Declare each port and assign appropriate events and commands
+
+            obj.PORT = portNumber;
+            obj.VALVE = valve_number;
+            obj.VALVE_TIME = valve_timing;
+
+            % Assigning event and command labels
             if (portNumber == 1) % LEFT LATERAL PORT
                 obj.LICK_ONSET = 'AnalogIn1_1';
                 obj.LICK_OFFSET = 'AnalogIn1_9';
@@ -25,7 +32,6 @@ classdef Port
                 
                 obj.COUNTER_ID = 1;
                 obj.COUNTER_EVENT = 'GlobalCounter1_End';
-                
             elseif (portNumber == 2) % CENTER PORT
                 obj.LICK_ONSET = 'AnalogIn1_2';
                 obj.LICK_OFFSET = 'AnalogIn1_10';
@@ -33,7 +39,6 @@ classdef Port
 
                 obj.COUNTER_ID = 2;
                 obj.COUNTER_EVENT = 'GlobalCounter2_End';
-                
             elseif (portNumber == 3) % RIGHT LATERAL PORT
                 obj.LICK_ONSET = 'AnalogIn1_3';
                 obj.LICK_OFFSET = 'AnalogIn1_11';
@@ -41,19 +46,9 @@ classdef Port
                 
                 obj.COUNTER_ID = 3;
                 obj.COUNTER_EVENT = 'GlobalCounter3_End';
-                
             else
                 error('Error: port number is not compatible with this protocol. '); 
             end
-        end
-
-        function obj = setValve(obj, valve_number) % Assigning valve associated with each port
-            global BpodSystem
-
-            time_variable_name = sprintf('open_time_%d', valve_number);
-
-            obj.VALVE = valve_number;
-            obj.VALVE_TIME = BpodSystem.ProtocolSettings.GUI.(time_variable_name)/1000;
         end
     end
 end
