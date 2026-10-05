@@ -1,3 +1,8 @@
+
+%% ExperimentVariables (Class)
+% This script defines the ExperimentVariables class to hold variables which are constant for the duration of the 
+% experimental session. It should only be called once in the main testing_v3 protocol script.  
+
 classdef ExperimentVariables
     properties (Constant)
         %% Session time variables (in seconds)
@@ -11,7 +16,6 @@ classdef ExperimentVariables
         DELAY_TIME = 3; % delay from closing the center door to opening the lateral door
         STIMULUS_WINDOW = 0.1; % pause after final valve closes before door goes up (if still within LICK_WINDOW)
         GAS_TIME = 0.3; % valve open time for gas clearing
-        GAS_TIME_PUNISH = 0.5; % valve open time for extra gas clearing before punish time
         GAS_DELAY = 0.2; % wait for pressure to stabilize before next valve opening
         PRIMING_DELAY = 0.5; % priming slug sits stagnant before final gas clearing and stimulus loading
 
@@ -57,7 +61,8 @@ classdef ExperimentVariables
 
     methods 
         function obj = ExperimentVariables
-            [waterValves, odorValves] = currentDayConditions;
+            % Calls general function currentDayConditions to get the current valve assignments
+            [waterValves, odorValves] = currentDayConditions; 
             
             obj.CENTER_VALVE_SET1 = waterValves;
             obj.CENTER_VALVE_SET2 = odorValves;

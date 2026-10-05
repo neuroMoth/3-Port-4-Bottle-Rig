@@ -1,8 +1,9 @@
-function t = elapsedTime()
-%ELAPSEDTIME Returns wall clock seconds since the first call.
-%   t = ELAPSEDTIME() returns the number of seconds passed since the first
-%   call to this function (wall clock time).
 
+%% elapsedTime 
+% Returns seconds since the first call. Used to check and record session length in MATLAB. 
+%   t = ELAPSEDTIME() returns the number of seconds passed since the first call to this function (wall clock time).
+
+function t = elapsedTime()
     persistent t0
     if isempty(t0)
         t0 = tic;   % Start timer on the first call

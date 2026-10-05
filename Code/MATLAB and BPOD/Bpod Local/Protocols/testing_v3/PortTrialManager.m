@@ -1,4 +1,8 @@
-% TVD - This class assigns the information from each of the lateral ports to the correct or incorrect port instances
+
+%% PortTrialManager (Class)
+% This script defines the PortTrialManager class to assign and hold the properties (e.g. event and command names) of the
+% correct and incorrect ports for each trial. This is determined using the valves assigned to each stimulus and the
+% condition code for the current animal subject (WLOR or WROL). 
 
 classdef PortTrialManager
     properties

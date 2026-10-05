@@ -1,4 +1,4 @@
-%% sessionSummary.m by TVD
+%% sessionSummary.m
 % Function to provide summary for session. 
 % Can be used without arguments to default to the most recent
 % animal+session. 

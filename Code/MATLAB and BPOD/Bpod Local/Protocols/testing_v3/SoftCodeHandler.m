@@ -1,7 +1,12 @@
+
+%% SoftCodeHandler
+% This function can recieve a byte sent from the Bpod while a trial is running. 
+% This is primarily to allow for the MATLAB command window to print the session results trial by trial. 
+
 function SoftCodeHandler(Byte)
     global BpodSystem       
 
-    expV = ExperimentVariables;
+    expV = ExperimentVariables; % Only needed to get the punish duration
 
     switch (Byte)
         case 1

@@ -1,6 +1,13 @@
-% TVD 8/27/26 
-% This class exists to replace the separate LateralPort and CenterPort classes by combining their functions. 
-% It holds and sets the information for each port. Each port needs an instance declared at the start of the session. 
+
+%% Port (Class)
+% This script defines the Port class to hold properties (e.g. event and command names) for each of the three ports 
+% in the behavior rig. These properties do not change for the duration of the session. 
+% 
+% Each port needs an instance declared at the start of the session. This is done using the following format: 
+%   portName = Port(port_number, valve_number, valve_timing); 
+% Where port_number is either 1 (LEFT), 2 (CENTER), or 3 (RIGHT). 
+% 
+% TVD Note: This class exists to replace the separate LateralPort and CenterPort classes by combining their functions. 
 
 classdef Port
     properties
@@ -18,28 +25,28 @@ classdef Port
     end
     
     methods 
-        function obj = Port(portNumber, valve_number, valve_timing) % Declare each port and assign appropriate events and commands
+        function obj = Port(port_number, valve_number, valve_timing) % Declare each port and assign appropriate events and commands
 
-            obj.PORT = portNumber;
+            obj.PORT = port_number;
             obj.VALVE = valve_number;
             obj.VALVE_TIME = valve_timing;
 
             % Assigning event and command labels
-            if (portNumber == 1) % LEFT LATERAL PORT
+            if (port_number == 1) % LEFT LATERAL PORT
                 obj.LICK_ONSET = 'AnalogIn1_1';
                 obj.LICK_OFFSET = 'AnalogIn1_9';
                 obj.DOOR = 'Flex1DO';
                 
                 obj.COUNTER_ID = 1;
                 obj.COUNTER_EVENT = 'GlobalCounter1_End';
-            elseif (portNumber == 2) % CENTER PORT
+            elseif (port_number == 2) % CENTER PORT
                 obj.LICK_ONSET = 'AnalogIn1_2';
                 obj.LICK_OFFSET = 'AnalogIn1_10';
                 obj.DOOR = 'Flex2DO';
 
                 obj.COUNTER_ID = 2;
                 obj.COUNTER_EVENT = 'GlobalCounter2_End';
-            elseif (portNumber == 3) % RIGHT LATERAL PORT
+            elseif (port_number == 3) % RIGHT LATERAL PORT
                 obj.LICK_ONSET = 'AnalogIn1_3';
                 obj.LICK_OFFSET = 'AnalogIn1_11';
                 obj.DOOR = 'Flex3DO';

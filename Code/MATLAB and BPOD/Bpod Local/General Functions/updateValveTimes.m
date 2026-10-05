@@ -1,13 +1,16 @@
-function settings_struct = update_valve_open_times(settings_struct, valve_labels, target_amount)
-    % set_open_valve_values sets open times for valves based on duration type.
-    %
-    % Inputs:
-    %   settings_struct - The settings structure containing GUI fields
-    %   valve_labels - array of valve numbers being updated
-    %
-    % Output:
-    %   settings_struct - Updated structure with open_time fields set
 
+%% updateValveTimes 
+% Sets open times for valves based on target stimulus amount and current liquid calibration values.
+%
+% Inputs:
+%   settings_struct - The settings structure containing GUI fields
+%   valve_labels - array of valve numbers being updated
+%
+% Output:
+%   settings_struct - Updated structure with open_time fields set
+
+function settings_struct = updateValveTimes(settings_struct, valve_labels, target_amount)
+    
     arguments
         settings_struct struct
         valve_labels double
