@@ -457,15 +457,21 @@ function testing_v3
         BpodSystem.Data.trialOrder.trialTypeOrder = trial_order;
         BpodSystem.Data.trialOrder.centerValveOrder = center_stim_valve_order;
         
-        % Preallocating summary arrays
-        BpodSystem.Data.summary.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
-        BpodSystem.Data.summary.engagedTrials = nan(expV.MAXIMUM_TRIALS, 1);
-        BpodSystem.Data.summary.correctPort = nan(expV.MAXIMUM_TRIALS, 1);
-        
         % save port properties
         BpodSystem.Data.portInfo.port1 = left_port;
         BpodSystem.Data.portInfo.port2 = center_port;
         BpodSystem.Data.portInfo.port3 = right_port;
+
+        % Preallocating summary arrays
+        BpodSystem.Data.summary.correctTrials = nan(expV.MAXIMUM_TRIALS, 1);
+        BpodSystem.Data.summary.engagedTrials = nan(expV.MAXIMUM_TRIALS, 1);
+        BpodSystem.Data.summary.correctPort = nan(expV.MAXIMUM_TRIALS, 1);
+
+        % Saving ExperimentVariables
+        propNames = properties(expV); propValues = cell(size(propNames));
+        for i = 1:numel(propNames); propValues{i} = expV.(propNames{i}); end
+        expVarTable = cell2table(propValues,'RowNames', propNames, 'VariableNames', {'Value'}); % Convert to table
+        BpodSystem.Data.experimentVariables = expVarTable; % Save table to structure
         
         % Save calibrated valve times for stimulus drivers
         BpodSystem.Data.valveTimings.valveStimTimes = table(valveID, valveStimTimes); % time in seconds
@@ -476,7 +482,7 @@ function testing_v3
 
     function [V, A, W] = ConfigureBpodModules
         % Assert that each module is present + USB-paired (not necessary for ValveDriver)
-        BpodSystem.assertModule({'ValveDriver','AnalogIn','WavePlayer'}, [0 1 1]);
+        BpodSystem.assertModule({'ValveModule','AnalogIn','WavePlayer'}, [0 1 1]);
 
         %%% Configure Valve Driver Module for valve control
         V = ValveDriverModule(BpodSystem.ModuleUSB.ValveModule1); 
