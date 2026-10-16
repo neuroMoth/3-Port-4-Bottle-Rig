@@ -3,7 +3,7 @@
 % Main protocol function for behavioral testing using the two-operant response task for retronasal/oral odor detection.
 %
 % Description:
-%   The two operant response task (2OR) requires a 3-port behavioral rig (operant chamber). The main task can be broken 
+%   The two response operant task (2RO) requires a 3-port behavioral rig (operant chamber). The main task can be broken 
 %   into 4 main parts:  
 %      (1) initial sampling period at the center port, 
 %      (2) a brief delay after the center door closes, 
@@ -109,6 +109,14 @@ function testing_v3
     if ~any(contains(condition, "null")); error('Error: no condition selected for this subject. '); end
     SUBJECT_CONDITION_CODE = condition(~contains(condition, "null"));
 
+    % Get current valve assignments from valve_config.mat
+    configFile = fullfile(fileparts(which('valve_config.mat')), 'valve_config.mat');
+    if ~isfile(configFile)
+        error(['Error: stimulus valve assignments not found (valve_config.mat). ' ...
+            'Check general function setValveStimuli. ']);
+    end
+    valveConfig = load(configFile);
+
     %% Generate port instances
     % port 1 = LEFT, port 2 = CENTER, port 3 = RIGHT
 
@@ -142,7 +150,8 @@ function testing_v3
     disp(['Condition: ' char(SUBJECT_CONDITION_CODE)]);
     fprintf('Date and time: %s\n', datetime("now"));
     disp(['Water valves: [', num2str(expV.CENTER_VALVE_SET1), ...
-          ']. Odor valves: [', num2str(expV.CENTER_VALVE_SET2), '].']);
+          ']. Odor valves: [', num2str(expV.CENTER_VALVE_SET2), ']. ', ...
+          'Odor is ',  valveConfig.config.stimulus_slots{2}, '. ']);
     fprintf(['Valve Durations (' num2str(expV.STIM_VOLUME) 'ul): ']);
     for iValves = 1:length(valveID)
         fprintf('%s=%.1fms. ', valveID(iValves), valveStimTimes(iValves)*1000);
@@ -168,7 +177,7 @@ function testing_v3
         if trial_order(trial) == 0
             fprintf('Water trial. ');
         else
-            fprintf('Odor trial.  ');
+            fprintf('Odor trial. ');
         end
 
         % Get center valve and set correct/incorrect ports based on the trial type and condition
@@ -468,7 +477,10 @@ function testing_v3
         BpodSystem.Data.condition = SUBJECT_CONDITION_CODE;
         BpodSystem.Data.trialOrder.trialTypeOrder = trial_order;
         BpodSystem.Data.trialOrder.centerValveOrder = center_stim_valve_order;
-        
+
+        % save valve stimulus assignment config (should contain stim id)
+        BpodSystem.Data.valveStimulusAssignments = valveConfig.config; 
+
         % save port properties
         BpodSystem.Data.portInfo.port1 = left_port;
         BpodSystem.Data.portInfo.port2 = center_port;

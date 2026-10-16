@@ -5,7 +5,7 @@
 %   Define up to 4 stimulus types and assign each of valves 1-8
 %   to one of those stimulus slots.
 %
-%   Saved file: 'valve_config.mat' next to this .m file.
+%   Saved file: 'valve_config.mat' under '..\Documents\Github\Bpod Local\Calibration Files'.
 %   Loaded struct 'config' has fields:
 %       config.stimuli        - pool of possible stimulus names
 %       config.stimulus_slots - 1x4 cell; name assigned to "Stimulus k"

@@ -75,7 +75,8 @@ classdef ExperimentVariables
             stimValves_logical(stimValves) = true; 
             
             % get stim assignments (1 = water, 2 = odor)
-            stimAssignments = config.valve_slots(stimValves_logical); 
+            valveConfigStruct = load(configFile);
+            stimAssignments = valveConfigStruct.config.valve_slots(stimValves_logical); 
             
             obj.CENTER_VALVE_SET1 = stimValves(stimAssignments == 1);
             obj.CENTER_VALVE_SET2 = stimValves(stimAssignments == 2);
