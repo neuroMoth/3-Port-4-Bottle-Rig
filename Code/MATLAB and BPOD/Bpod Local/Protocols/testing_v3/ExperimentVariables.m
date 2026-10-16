@@ -61,11 +61,24 @@ classdef ExperimentVariables
 
     methods 
         function obj = ExperimentVariables
-            % Calls general function currentDayConditions to get the current valve assignments
-            [waterValves, odorValves] = currentDayConditions; 
+            % get current valve assignments from valve_config.mat
+            configFile = fullfile(fileparts(which('valve_config.mat')), 'valve_config.mat');
+            if ~isfile(configFile)
+                error(['Error: stimulus valve assignments not found (valve_config.mat). ' ...
+                    'Check general function setValveStimuli. ']); 
+            end
             
-            obj.CENTER_VALVE_SET1 = waterValves;
-            obj.CENTER_VALVE_SET2 = odorValves;
+            % get valve assignments for stimulus valves
+            stimValves = [2, 3, 5, 6]; 
+            % convert to logical
+            stimValves_logical = false(1,8); 
+            stimValves_logical(stimValves) = true; 
+            
+            % get stim assignments (1 = water, 2 = odor)
+            stimAssignments = config.valve_slots(stimValves_logical); 
+            
+            obj.CENTER_VALVE_SET1 = stimValves(stimAssignments == 1);
+            obj.CENTER_VALVE_SET2 = stimValves(stimAssignments == 2);
         end
     end
 end

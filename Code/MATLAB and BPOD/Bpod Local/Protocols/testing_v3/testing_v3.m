@@ -3,15 +3,23 @@
 % Main protocol function for behavioral testing using the two-operant response task for retronasal/oral odor detection.
 %
 % Description:
-%   The two operant response task requires a 3-port behavioral rig. The main task is broken into (1) a sampling period
-%   at the center port, (2) a brief delay after the center door closes, (3) opening of the 2 lateral doors for the
-%   animal to make a choice by licking one side. This protocol also includes a sequence of states during the intertrial
-%   interval (ITI) which allow for the center spout to be cleared, rinsed, and loaded with the stimulus for the upcoming
-%   trial.
+%   The two operant response task (2OR) requires a 3-port behavioral rig (operant chamber). The main task can be broken 
+%   into 4 main parts:  
+%      (1) initial sampling period at the center port, 
+%      (2) a brief delay after the center door closes, 
+%      (3) opening of the 2 lateral doors for the animal to make a choice by licking one side, and 
+%      (4) an intertrial interval (ITI). 
+%   This protocol includes a sequence of states during the intertrial interval (ITI) which allow for the center 
+%   spout to be cleared, rinsed, and loaded with the stimulus for the upcoming trial. The states are laid out so that
+%   the ITI is actually split in to two parts, one at the start of the current trial and the second at the end. All
+%   rinse and stimulus states are located as parts of the "start" ITI while the "end" ITI allows time for final door 
+%   closing and adding punishment time on incorrect trials. 
 %
-%   This requires a center spout connected to a multi-channel manifold with a rinse and a gas line. The inside of
-%   the spout contains a single shared channel for all stimuli. Stimuli are loaded from the manifold and rinsed out
-%   with gas and water. Rinse and waste stimuli are cleared by a waste vacuum positioned in front of the spout.
+%   For this protocol to function as intended, the center spout should be connected to a multi-channel manifold with 
+%   input lines for each stimulus, a single "driver" valve for pushing the final stimulus delivery, a water rinse, and 
+%   a gas (Nitrogen) line. The inside of the spout will contain single shared channel for all stimulus deliveries. 
+%   Stimuli are loaded from the manifold and rinsed out with gas and water. Rinse and waste stimuli will be cleared by 
+%   a waste vacuum positioned in front of the spout.
 %
 %   Lateral and center driver valves should be calibrated for 5 uL pulses in ~70 ms for delivering stimuli.
 %   Stimulus and rinse valves should be calibrated for 100-600 uL pulses in ~1000-3000 ms for stimulus loading
@@ -58,21 +66,22 @@ function testing_v3
     [trial_order, center_stim_valve_order] = GenerateTrialOrder(); % Protocol function. Returns trial order.
 
     %% LOAD and UPDATE ProtocolSettings and Get Valve Timings
-    S = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace as a struct called 'S'
-    subject = BpodSystem.GUIData.SubjectName;
-    if isempty(S) || isempty(fieldnames(S)) % If running this protocol for the first time with this subject, or if settings cannot be found
+    ProtocolSettings = BpodSystem.ProtocolSettings; % Loads settings file chosen in launch manager into current workspace
+    subject = BpodSystem.GUIData.SubjectName; % Saving the subject name from the graphical user interface (GUI)
+    % If running this protocol for the first time with this subject, or if settings cannot be found
+    if isempty(ProtocolSettings) || isempty(fieldnames(ProtocolSettings)) 
         dir = ['C:\Users\Chad Samuelsen\Documents\Github\Bpod Local\Data\',subject,'\Set_exp_parameters\Session Settings\DefaultSettings.mat'];
         temp = load(dir);
-        S = temp.ProtocolSettings; clear temp;
-        BpodSystem.ProtocolSettings = S;
+        ProtocolSettings = temp.ProtocolSettings; clear temp;
+        BpodSystem.ProtocolSettings = ProtocolSettings;
     end
 
     % UPDATE valve open times
     deliveryValves = sort([expV.LEFT_VALVE, expV.CENTER_DRIVER_VALVE, expV.RIGHT_VALVE]); % Valves for delivering stimuli
     centerStimValves = [expV.CENTER_VALVE_SET1, expV.CENTER_VALVE_SET2]; % Valves for loading center port stimuli
-    S = updateValveTimes(S, deliveryValves, expV.STIM_VOLUME);
+    ProtocolSettings = updateValveTimes(ProtocolSettings, deliveryValves, expV.STIM_VOLUME);
 
-    % save delivery valve open times to session data
+    % save stimulus delivery valve open times to session data (saved from the protocol settings GUI)
     valveID = strings(size(deliveryValves))';
     valveStimTimes = zeros(size(deliveryValves))';
     for iValve = 1:length(deliveryValves)
@@ -91,19 +100,20 @@ function testing_v3
     end
 
     % Save protocol settings (after updating valve timings)
-    BpodSystem.ProtocolSettings = S;
+    BpodSystem.ProtocolSettings = ProtocolSettings;
     SaveProtocolSettings(BpodSystem.ProtocolSettings)
-    BpodParameterGUI('init', S); % initialize GUI to keep track of parameters
+    BpodParameterGUI('init', ProtocolSettings); % initialize GUI to keep track of parameters
 
     % GET CONDITION FOR CURRENT SUBJECT
-    condition = S.GUIMeta.CONDITION_CODE.String;
+    condition = ProtocolSettings.GUIMeta.CONDITION_CODE.String;
     if ~any(contains(condition, "null")); error('Error: no condition selected for this subject. '); end
     SUBJECT_CONDITION_CODE = condition(~contains(condition, "null"));
 
     %% Generate port instances
     % port 1 = LEFT, port 2 = CENTER, port 3 = RIGHT
 
-    % Instances of each port class are constant throughout the session.
+    % Instances (the variables for each port below) of the Port class (which sets the properties for each port) are 
+    % set up below and remain constant throughout the session. 
     left_port = Port(1, expV.LEFT_VALVE, valveStimTimes(deliveryValves == expV.LEFT_VALVE));
     center_port = Port(2, expV.CENTER_DRIVER_VALVE, valveStimTimes(deliveryValves == expV.CENTER_DRIVER_VALVE));
     right_port = Port(3, expV.RIGHT_VALVE, valveStimTimes(deliveryValves == expV.RIGHT_VALVE));
@@ -116,14 +126,16 @@ function testing_v3
     addToBpodData(); % Adds session information to BpodSystem.Data to be saved (starts at the end of the first trial). 
 
     %% Configure valve, analog in, and waveplayer modules
-    % The ValveModule manages the valve open/closed states. 
-    % AnalogInModule records licking and generates events. 
-    % WavePlayerModule produces tones. 
-    [ValveModule, AnalogInModule, WavePlayerModule] = ConfigureBpodModules(); % configure Bpod modules
+    % Modules are additional microcontrollers which interface with the Bpod machine to record and control events. For
+    % this protocol, three modules are required: 
+    %   - The ValveModule1 manages the valve open/closed states. 
+    %   - AnalogIn1 records licking and generates events. 
+    %   - WavePlayer1 produces tones. 
+    [ValveModule1, AnalogIn1, WavePlayer1] = ConfigureBpodModules(); % configure Bpod modules
     
-    % Start the oscilliscope gui to view capacitance sensor inputs.
-    AnalogInModule.scope();
-    AnalogInModule.scope_StartStop();
+    % Start the oscilliscope GUI to view capacitance sensor inputs.
+    AnalogIn1.scope();
+    AnalogIn1.scope_StartStop();
 
     %% PRINT SESSION START INFO TO COMMAND WINDOW
     disp(['Subject Name: ' subject]);
@@ -147,7 +159,7 @@ function testing_v3
     % Loops until one end conditions are met (trial number, session time, or manually stopped). 
     for trial = 1:expV.MAXIMUM_TRIALS
 
-        S = BpodParameterGUI('sync', S); % Sync parameters with BpodParameterGUI plugin
+        ProtocolSettings = BpodParameterGUI('sync', ProtocolSettings); % Sync parameters with BpodParameterGUI plugin
 
         %% Get parameters for the current trial and save to variables
         BpodSystem.Status.trial  = trial;
@@ -378,7 +390,7 @@ function testing_v3
             'StateChangeConditions', {'Tup', 'exit'},...
             'OutputActions',{left_port.DOOR, expV.UP, right_port.DOOR, expV.UP, 'SoftCode', 15});
         
-        % If incorrect choice: wait for final lick, then report incorrect and go to punish
+        % If incorrect choice: wait for one more lick (after dry licks), then report incorrect (close doors and punish)
         sma = AddState(sma, 'Name', 'waitFinalIncorrectLick', ...
             'Timer', 0,...
             'StateChangeConditions', {incorrect_port.LICK_ONSET, 'reportIncorrect', expV.LICK_WINDOW_TIMER_END, 'reportSkip'},...
@@ -434,13 +446,13 @@ function testing_v3
             disp(['Experiment duration: ' num2str(t) 'sec.' ])
             clear elapsedTime; % Stop counting time from session start.
 
-            AnalogInModule.scope_StartStop; % Close oscilloscope GUI
-            AnalogInModule.endAcq; % Stop recording events (threshold crossings)
-            AnalogInModule.stopReportingEvents; % Stop sending events to state machine
-            ValveModule.isOpen = zeros(1,8); % Make sure all valves are closed
-            clear AnalogInModule
-            clear WavePlayerModule
-            clear ValveModule
+            AnalogIn1.scope_StartStop; % Close oscilloscope GUI
+            AnalogIn1.endAcq; % Stop recording events (threshold crossings)
+            AnalogIn1.stopReportingEvents; % Stop sending events to state machine
+            ValveModule1.isOpen = zeros(1,8); % Make sure all valves are closed
+            clear AnalogIn1
+            clear WavePlayer1
+            clear ValveModule1
 
             sessionSummary(); % Prints basic session results to the MATLAB command window.
             return
