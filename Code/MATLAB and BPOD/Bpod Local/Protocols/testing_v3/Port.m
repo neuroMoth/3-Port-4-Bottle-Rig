@@ -20,8 +20,12 @@ classdef Port
         LICK_OFFSET; % event for lick offset detection
         DOOR; % output command for controlling door motors
         
-        COUNTER_ID; % id for global counter which counts the number of dry licks
+        COUNTER_ID; % id for global counter which counts the number of dry licks (before stimulus)
         COUNTER_EVENT; % event that triggers when the counter threshold is reached
+        
+        % For center port only: 
+        COUNTER_ID_2; % id for global counter which counts the number of dry licks (after stimulus)
+        COUNTER_EVENT_2; % event that triggers when the counter threshold is reached
     end
     
     methods 
@@ -46,6 +50,9 @@ classdef Port
 
                 obj.COUNTER_ID = 2;
                 obj.COUNTER_EVENT = 'GlobalCounter2_End';
+                
+                obj.COUNTER_ID_2 = 4;
+                obj.COUNTER_EVENT_2 = 'GlobalCounter4_End';
             elseif (port_number == 3) % RIGHT LATERAL PORT
                 obj.LICK_ONSET = 'AnalogIn1_3';
                 obj.LICK_OFFSET = 'AnalogIn1_11';

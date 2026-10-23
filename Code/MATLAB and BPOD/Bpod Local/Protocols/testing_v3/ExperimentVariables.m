@@ -14,10 +14,13 @@ classdef ExperimentVariables
         TTC_LATERAL_TIME = 5;
         LICK_WINDOW = 2; % time rat has to complete required amount of licks.
         DELAY_TIME = 3; % delay from closing the center door to opening the lateral door
-        STIMULUS_WINDOW = 0.1; % pause after final valve closes before door goes up (if still within LICK_WINDOW)
         GAS_TIME = 0.3; % valve open time for gas clearing
         GAS_DELAY = 0.2; % wait for pressure to stabilize before next valve opening
         PRIMING_DELAY = 0.5; % priming slug sits stagnant before final gas clearing and stimulus loading
+        
+        %% Dry Licks
+        DRY_LICKS_PRESTIM = 3; % number of licks to be completed before stimulus delivery (for 3 licks)
+        DRY_LICKS_POSTSTIM = 7; % number of licks to be completed after the 3 stimulus deliveries
 
         %% Volumes
         STIM_VOLUME = 5; % stimulus in ul delivered per lick (3 licks for center, 4 licks for lateral)
@@ -28,7 +31,7 @@ classdef ExperimentVariables
         %% Valves
         LEFT_VALVE = 1; % left port valve
         RIGHT_VALVE = 8; % right port valve
-        CENTER_DRIVER_VALVE = 4; % center port valve for delivering each stimulus
+        CENTER_DRIVER_VALVE = 2; % center port valve for delivering each stimulus
         RINSE_VALVE = 7;
         GAS_VALVE = 'BNC1';
 
@@ -69,7 +72,7 @@ classdef ExperimentVariables
             end
             
             % get valve assignments for stimulus valves
-            stimValves = [2, 3, 5, 6]; 
+            stimValves = [3, 4, 5, 6]; 
             % convert to logical
             stimValves_logical = false(1,8); 
             stimValves_logical(stimValves) = true; 

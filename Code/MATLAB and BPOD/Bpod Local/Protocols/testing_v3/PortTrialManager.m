@@ -15,8 +15,11 @@ classdef PortTrialManager
         LICK_OFFSET; % event for lick offset detection
         DOOR; % output command for controlling door motors
         
-        COUNTER_ID; % id for global counter which counts the number of dry licks
+        COUNTER_ID; % id for global counter which counts the number of dry licks (before stimulus)
         COUNTER_EVENT; % event that triggers when the counter threshold is reached
+        
+        COUNTER_ID_2; % id for global counter which counts the number of dry licks (after stimulus, correct only)
+        COUNTER_EVENT_2; % event that triggers when the counter threshold is reached
     end
 
     methods
@@ -42,6 +45,10 @@ classdef PortTrialManager
                         obj = obj.setProperties(port_1_inst);
                 end
             end
+            
+            % For correct only, add additional counter for dry licks after the stimulus
+            obj.COUNTER_ID_2 = 5;
+            obj.COUNTER_EVENT_2 = 'GlobalCounter5_End';
         end
         
         function obj = setIncorrect(obj, port_1_inst, port_3_inst, center_valve, stim1Valves, stim2Valves, conditionCode)
