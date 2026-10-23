@@ -1,5 +1,5 @@
 
-%% TESTING PROTOCOL V3.6 | TWO RESPONSE OPERANT TASK
+%% TESTING PROTOCOL V3.7 | TWO RESPONSE OPERANT TASK
 % Main protocol function for behavioral testing using the two-response operant task for retronasal/oral odor detection.
 %
 % Description:

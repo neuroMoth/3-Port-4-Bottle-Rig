@@ -29,7 +29,7 @@ function [stim1_valves, stim2_valves, currentStartOrder] = currentDayConditions(
             startDate = datetime(2026,9,29);
         end
         if nargin < 2 || isempty(startingOrder) 
-            startingOrder = [2 3 5 6]; % water water, odor odor
+            startingOrder = [3 4 5 6]; % water water, odor odor
         end
 
         savedStartDate           = startDate;

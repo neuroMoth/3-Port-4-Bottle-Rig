@@ -10,7 +10,7 @@ if isempty(fieldnames(S)) % If running this protocol for the first time with thi
 end
 
 % UPDATE valve open times
-S = update_valve_open_times(S, 1:8);
+S = updateValveTimes(S, 1:8);
 
 % Save protocol settings (after updating valve timings)
 BpodSystem.ProtocolSettings = S;
