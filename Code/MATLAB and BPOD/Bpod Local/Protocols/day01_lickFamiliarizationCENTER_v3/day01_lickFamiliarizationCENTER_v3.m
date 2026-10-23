@@ -120,11 +120,11 @@ function day01_lickFamiliarizationCENTER_v3
     ProtocolSettings = BpodParameterGUI('sync', ProtocolSettings); % Sync parameters with BpodParameterGUI plugin
 
     % Get trial parameters according to trial type
-    if expv.CURRENT_PORT == 1 % Left port
+    if expV.CURRENT_PORT == 1 % Left port
         thisPort = left_port; 
-    elseif expv.CURRENT_PORT == 2 % Center port
+    elseif expV.CURRENT_PORT == 2 % Center port
         thisPort = center_port; 
-    elseif expv.CURRENT_PORT == 3 % Right port
+    elseif expV.CURRENT_PORT == 3 % Right port
         thisPort = right_port; 
     else; error('Port selection error. ');
     end
@@ -177,7 +177,7 @@ function day01_lickFamiliarizationCENTER_v3
         'OutputActions', {thisPort.DOOR, expV.DOWN, 'ValveModule1', ['O' thisPort.VALVE], 'SoftCode', 4});
     sma = AddState(sma, 'Name', 'closeReward', ...
         'Timer', 0,...
-        'StateChangeConditions', {'Tup', 'waitDryLicks'},...
+        'StateChangeConditions', {'Tup', 'waitDryLick'},...
         'OutputActions', {thisPort.DOOR, expV.DOWN, 'ValveModule1', ['C' thisPort.VALVE]});
 
     %%%%% SESSION END %%%%%
@@ -210,7 +210,7 @@ function day01_lickFamiliarizationCENTER_v3
         disp(['Experiment duration: ' num2str(t) 'sec.' ])
         clear elapsedTime; % Stop counting time from session start.
         
-        fprintf('%d total licks.', BpodSystem.Data.lickNumber)
+        fprintf('%d total licks.', BpodSystem.Data.rewardedLickCount)
         fprintf('\n')
 
         AnalogIn1.scope_StartStop; % Close oscilloscope GUI

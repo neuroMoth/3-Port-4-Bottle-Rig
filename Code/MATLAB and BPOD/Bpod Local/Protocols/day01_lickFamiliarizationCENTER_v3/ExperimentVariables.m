@@ -6,7 +6,7 @@
 classdef ExperimentVariables
     properties (Constant)
         %% Lick familiarization port
-        CURRENT_PORT = 2; % port 2 is the center
+        CURRENT_PORT = 2; % port 2 is the center port
         
         %% Session time variables (in seconds)
         TOTAL_ALLOWED_TIME = 1800;
