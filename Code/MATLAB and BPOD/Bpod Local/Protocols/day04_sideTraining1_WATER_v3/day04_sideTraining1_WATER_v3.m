@@ -51,10 +51,8 @@ function day04_sideTraining1_WATER_v3
     % FOR SIDE TRAINING: this is only used to shuffle the order of stimulus loading valves. 
     if expV.SIDE_TRAINING_STIMULUS == 1 % 1 for water
         [center_stim_valve_order, ~] = GenerateTrialOrder_SideAndAlternationTraining();
-        sessionStimulus = 'Water'; 
     elseif expV.SIDE_TRAINING_STIMULUS == 2 % 2 for odor
-        [~, center_stim_valve_order] = GenerateTrialOrder_SideAndAlternationTraining();
-        sessionStimulus = 'Odor'; 
+        [~, center_stim_valve_order] = GenerateTrialOrder_SideAndAlternationTraining(); 
     end
 
     %% LOAD and UPDATE ProtocolSettings and Get Valve Timings
@@ -138,7 +136,6 @@ function day04_sideTraining1_WATER_v3
     %% PRINT SESSION START INFO TO COMMAND WINDOW
     disp(['Subject Name: ' subject]);
     disp(['Condition: ' char(SUBJECT_CONDITION_CODE)]);
-    disp([sessionStimulus ' session. ']);
     fprintf('Date and time: %s\n', datetime("now"));
     disp(['Water valves: [', num2str(expV.CENTER_VALVE_SET1), ...
           ']. Odor valves: [', num2str(expV.CENTER_VALVE_SET2), ']. ', ...
@@ -419,8 +416,8 @@ function day04_sideTraining1_WATER_v3
             clear WavePlayer1
             clear ValveModule1
 
-            nTotalTr=length(SessionData.TrialStartTimestamp);
-            nEngagedTr=sum(BpodSystem.Data.summary.engagedTrials==1);
+            nTotalTr = trial;
+            nEngagedTr = sum(BpodSystem.Data.summary.engagedTrials == 1);
             disp([num2str(nEngagedTr) ' engaged trials out of ' num2str(nTotalTr) ' total trials. ' ]); 
             return
         end
