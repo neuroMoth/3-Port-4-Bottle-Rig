@@ -418,7 +418,9 @@ function day05_sideTraining1_ODOR_v3
 
             nTotalTr = trial;
             nEngagedTr = sum(BpodSystem.Data.summary.engagedTrials == 1);
+            estConsumed = nEngagedTr * expV.STIM_VOLUME * 6 * 0.001; % 6 stimulus deliveries per engaged trial
             disp([num2str(nEngagedTr) ' engaged trials out of ' num2str(nTotalTr) ' total trials. ' ]); 
+            fprintf('Estimated %.1fml consumed. \n', estConsumed);
             return
         end
     end
